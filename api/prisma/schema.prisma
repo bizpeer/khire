@@ -28,6 +28,14 @@ enum JobStatus {
   PENDING
   ACTIVE
   CLOSED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
 }
 
 enum ApplyStatus {
@@ -73,6 +81,7 @@ model Company {
   updatedAt     DateTime @updatedAt
 
   jobs          Job[]
+  payments      JobPayment[]
 }
 
 model Resume {
@@ -115,26 +124,49 @@ model ResumeCareer {
 }
 
 model Job {
-  id                 String    @id @default(uuid())
+  id                 String     @id @default(uuid())
   companyId          String
-  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company            Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   title              String
+  category           String     @default("F_AND_B")
   salaryType         String?
   salaryAmount       String?
   address            String
   latitude           Float
   longitude          Float
-  employmentType     String    @default("Full-time")
+  imageUrl           String?    // 공고 이미지 첨부 URL
+  employmentType     String     @default("Full-time")
   experienceRequired String?
   educationRequired  String?
   benefits           String?
-  recruitsCount      Int       @default(1)
-  deadline           DateTime?
-  status             JobStatus @default(ACTIVE)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  recruitsCount      Int        @default(1)
+  isPaid             Boolean    @default(false)
+  paidAt             DateTime?  // $1 결제 성공 시각
+  expiresAt          DateTime?  // 결제 성공 시각 기준 정확히 7일 후 만료
+  originalJobId      String?    // 기존 공고 재활용/복사 시 원본 공고 ID
+  status             JobStatus  @default(PENDING)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   applies            JobApply[]
+  payments           JobPayment[]
+}
+
+model JobPayment {
+  id               String        @id @default(uuid())
+  jobId            String
+  job              Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  companyId        String
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  amount           Float         @default(1.00)
+  currency         String        @default("USD")
+  provider         String        @default("PAYPAL")
+  paypalHostingId  String        @default("R5JUWLNA7ZJJA")
+  paymentUrl       String        @default("https://www.paypal.com/ncp/payment/R5JUWLNA7ZJJA")
+  status           PaymentStatus @default(PENDING)
+  paidAt           DateTime?
+  expiresAt        DateTime?     // 7일 게시 만료 시각 (paidAt + 7일)
+  createdAt        DateTime      @default(now())
 }
 
 model JobApply {
@@ -151,13 +183,13 @@ model JobApply {
 }
 
 model Message {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   channelId  String
   senderId   String
-  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  sender     User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiverId String
-  receiver   User     @relation("RecvMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiver   User      @relation("RecvMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   content    String
   readAt     DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 }

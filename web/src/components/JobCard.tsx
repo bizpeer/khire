@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { JobPost } from '@/types/job';
-import { MapPin, Sparkles, Clock, Bus, Car, Zap, Building2, Utensils, Hotel, Truck, Cpu } from 'lucide-react';
+import { MapPin, Sparkles, Clock, Bus, Car, Zap, Building2, Utensils, Hotel, Truck, Cpu, CalendarCheck, Image as ImageIcon } from 'lucide-react';
 
 interface JobCardProps {
   job: JobPost;
@@ -48,15 +48,52 @@ export default function JobCard({ job, onApply }: JobCardProps) {
   const categoryMeta = getCategoryBadge();
   const CategoryIcon = categoryMeta.icon;
 
+  // Calculate remaining days for 7-day post duration
+  const get7DayStatus = () => {
+    if (!job.expiresAt) return { text: '7일 게시 중', badgeStyle: 'bg-slate-800 text-slate-300' };
+    const expiresDate = new Date(job.expiresAt);
+    const now = new Date();
+    const diffMs = expiresDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) {
+      return { text: '7일 게시 기간 만료 (연장 결제 필요)', badgeStyle: 'bg-rose-950/80 text-rose-300 border-rose-800/80' };
+    }
+    return { text: `7일 게시 중 (D-${diffDays}일 남음)`, badgeStyle: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80' };
+  };
+
+  const dayStatus = get7DayStatus();
+
   return (
-    <article className="glass-card rounded-3xl p-5 md:p-6 flex flex-col justify-between h-full relative group border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 shadow-lg hover:shadow-2xl">
+    <article className="glass-card rounded-3xl p-5 md:p-6 flex flex-col justify-between h-full relative group border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden">
       <div>
-        {/* Top Header Row: Category Badge & AI Match Score */}
-        <div className="flex items-center justify-between gap-2 mb-3.5">
-          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border ${categoryMeta.style}`}>
-            <CategoryIcon className="w-3.5 h-3.5" />
-            <span>{categoryMeta.label}</span>
-          </span>
+        {/* Attached Job Image (if available) */}
+        {job.imageUrl && (
+          <div className="relative w-full h-36 rounded-2xl overflow-hidden mb-4 border border-slate-800 shadow-inner group-hover:border-emerald-500/30 transition-colors">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={job.imageUrl}
+              alt={job.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+            <span className="absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[10px] text-slate-200 font-medium flex items-center gap-1 border border-white/10">
+              <ImageIcon className="w-3 h-3 text-emerald-400" /> 매장/근무지 실물 이미지
+            </span>
+          </div>
+        )}
+
+        {/* Top Header Row: Category Badge & AI Match Score & Demo Badge */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-1.5">
+            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border ${categoryMeta.style}`}>
+              <CategoryIcon className="w-3.5 h-3.5" />
+              <span>{categoryMeta.label}</span>
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[10px] font-semibold border border-slate-700">
+              [예시 공고]
+            </span>
+          </div>
 
           {/* AI Match Score Badge */}
           <div className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
@@ -66,10 +103,12 @@ export default function JobCard({ job, onApply }: JobCardProps) {
         </div>
 
         {/* Company Logo & Job Title */}
-        <div className="flex items-start gap-3.5 mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-2xl shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-            {job.companyLogo || '🏢'}
-          </div>
+        <div className="flex items-start gap-3.5 mb-3.5">
+          {!job.imageUrl && (
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-2xl shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+              {job.companyLogo || '🏢'}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <span className="text-xs font-semibold text-slate-400 block tracking-tight truncate">
               {job.companyName}
@@ -78,6 +117,14 @@ export default function JobCard({ job, onApply }: JobCardProps) {
               {job.title}
             </h3>
           </div>
+        </div>
+
+        {/* 7-Day Payment Expiration Indicator Pill */}
+        <div className="mb-3.5">
+          <span className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border flex items-center gap-1.5 w-fit ${dayStatus.badgeStyle}`}>
+            <CalendarCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{dayStatus.text}</span>
+          </span>
         </div>
 
         {/* Location & Radius Distance Pill */}

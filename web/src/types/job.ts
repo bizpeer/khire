@@ -21,6 +21,11 @@ export interface JobPost {
   deadline: string;
   description: string;
   isEasyApply: boolean;
+  imageUrl?: string; // 공고 이미지 첨부 URL
+  isPaid?: boolean; // $1.00 USD 결제 여부
+  paidAt?: string; // 결제 시각
+  expiresAt?: string; // 결제 성공 시각부터 정확히 7일 후 만료 시각
+  originalJobId?: string; // 기존 공고 재활용/복사 시 원본 공고 ID
   commuteTimeEstimate?: {
     transitMinutes: number;
     carMinutes: number;

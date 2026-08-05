@@ -14,8 +14,7 @@ export interface JobPost {
   longitude: number;
   distanceKm?: number;
   salary: string;
-  employmentType: 'Full-time' | 'Part-time' | 'Contract' | 'Visa Sponsored';
-  visaTypes: string[]; // e.g. ['E-7', 'F-4', 'H-1', 'F-6', 'H-2B', 'J-1']
+  employmentType: 'Full-time' | 'Part-time' | 'Contract';
   matchScore: number; // e.g. 96%
   skills: string[];
   postedAt: string;

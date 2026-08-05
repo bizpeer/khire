@@ -31,8 +31,7 @@ export const MOCK_JOBS: Omit<JobPost, 'distanceKm'>[] = [
     latitude: 34.0618,
     longitude: -118.3000,
     salary: '시급 $25 ~ $32 + Tip (연 $62,000)',
-    employmentType: 'Visa Sponsored',
-    visaTypes: ['E-2', 'H-2B', 'J-1', '영주권 스폰'],
+    employmentType: 'Full-time',
     matchScore: 98,
     skills: ['한식 조리', '주방 관리', '식자재 발주', '팀 리더십'],
     postedAt: '2시간 전',
@@ -53,7 +52,7 @@ export const MOCK_JOBS: Omit<JobPost, 'distanceKm'>[] = [
     longitude: -118.3061,
     salary: '시급 $20 ~ $24 + Tip',
     employmentType: 'Full-time',
-    visaTypes: ['OPT', 'J-1', 'H-1B', 'E-2'],
+
     matchScore: 94,
     skills: ['바리스타', '카페 매니지먼트', '디저트 제조', 'Customer Service'],
     postedAt: '4시간 전',
@@ -74,7 +73,7 @@ export const MOCK_JOBS: Omit<JobPost, 'distanceKm'>[] = [
     longitude: -118.2925,
     salary: '연봉 $52,000 ~ $65,000',
     employmentType: 'Full-time',
-    visaTypes: ['E-2', 'H-1B', '영주권 스폰'],
+
     matchScore: 92,
     skills: ['호텔 예약', '객실 관리', '고객 응대', '시설 점검'],
     postedAt: '오늘',
@@ -95,7 +94,7 @@ export const MOCK_JOBS: Omit<JobPost, 'distanceKm'>[] = [
     longitude: -118.2985,
     salary: '시급 $23 ~ $28 (주 40시간 보장)',
     employmentType: 'Full-time',
-    visaTypes: ['H-2B', 'E-2', '영주권 지원'],
+
     matchScore: 90,
     skills: ['청소 관리', '장비 운용', '인원 배치', '품질 검수'],
     postedAt: '1일 전',
@@ -116,7 +115,7 @@ export const MOCK_JOBS: Omit<JobPost, 'distanceKm'>[] = [
     longitude: 127.0559,
     salary: '연봉 5,500 ~ 7,500만 원',
     employmentType: 'Full-time',
-    visaTypes: ['E-7-1', 'F-4', 'F-6'],
+
     matchScore: 96,
     skills: ['NestJS', 'PostgreSQL', 'TypeScript', 'Docker'],
     postedAt: '1시간 전',
@@ -137,7 +136,7 @@ export const MOCK_JOBS: Omit<JobPost, 'distanceKm'>[] = [
     longitude: 127.0464,
     salary: '월급 350만 원',
     employmentType: 'Full-time',
-    visaTypes: ['H-1', 'E-9', 'F-4', 'F-6'],
+
     matchScore: 85,
     skills: ['Logistics', 'Inventory', 'Bilingual'],
     postedAt: '2일 전',

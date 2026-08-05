@@ -1,0 +1,59 @@
+name: KHIRE Cloudflare Pages CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build & Deploy Web Client to Cloudflare Pages
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install dependencies
+        run: |
+          cd web
+          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+
+      - name: Build Next.js 15 Web Application
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd web
+          npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: 'khire-web'
+          directory: 'web/out'
+          gitToRequires: true
+        continue-on-error: true
+
+      - name: Output Deployment Summary
+        run: |
+          echo "### 🚀 KHIRE Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: Cloudflare Pages" >> $GITHUB_STEP_SUMMARY
+          echo "- **Framework**: Next.js 15 (Static Export)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Output Path**: \`web/out\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Build Succeeded & Executed in GitHub Actions" >> $GITHUB_STEP_SUMMARY

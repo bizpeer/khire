@@ -5,27 +5,35 @@ import Header from '@/components/Header';
 import RadiusFilter from '@/components/RadiusFilter';
 import JobCard from '@/components/JobCard';
 import GoogleMapView from '@/components/GoogleMapView';
+import NewsTicker from '@/components/NewsTicker';
 import AuthModal from '@/components/AuthModal';
 import ResumeModal from '@/components/ResumeModal';
 import AdminDashboardModal from '@/components/AdminDashboardModal';
 import {
   MOCK_JOBS,
-  INITIAL_USER_LOCATION,
   calculateHaversineDistance,
 } from '@/lib/mockJobs';
 import { detectUserLocation } from '@/lib/geoIp';
-import { RadiusOption, JobPost, UserLocation } from '@/types/job';
+import { RadiusOption, JobPost, UserLocation, JobCategory } from '@/types/job';
 import { Language, DICTIONARY } from '@/lib/i18n';
-import { Sparkles, Map, List, Search, ShieldCheck, Globe2, Briefcase, Navigation } from 'lucide-react';
+import { Sparkles, Map, List, Search, ShieldCheck, Globe2, Utensils, Hotel, Truck, Cpu, Navigation } from 'lucide-react';
 
 export default function HomePage() {
   const [language, setLanguage] = useState<Language>('KO');
   const t = DICTIONARY[language];
 
-  const [userLocation, setUserLocation] = useState<UserLocation>(INITIAL_USER_LOCATION);
+  const [userLocation, setUserLocation] = useState<UserLocation>({
+    address: '미국 캘리포니아 로스앤젤레스 한인타운 (LA Koreatown)',
+    latitude: 34.0618,
+    longitude: -118.3000,
+    countryCode: 'US',
+    countryName: '미국 (USA)',
+    isGranted: false,
+  });
   const [isLocating, setIsLocating] = useState<boolean>(true);
-  const [selectedRadius, setSelectedRadius] = useState<RadiusOption>(30); // Default 30km as requested
+  const [selectedRadius, setSelectedRadius] = useState<RadiusOption>(30); // Default 30km
   const [selectedVisa, setSelectedVisa] = useState<string>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<JobCategory>('ALL');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [viewMode, setViewMode] = useState<'LIST' | 'MAP'>('LIST');
   const [appliedJob, setAppliedJob] = useState<JobPost | null>(null);
@@ -35,7 +43,7 @@ export default function HomePage() {
   const [isResumeOpen, setIsResumeOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  // Detect IP & GPS location automatically on landing page load
+  // Detect IP & GPS location automatically. Fallback to LA Koreatown if permission denied.
   useEffect(() => {
     detectUserLocation().then((loc) => {
       setUserLocation(loc);
@@ -43,12 +51,11 @@ export default function HomePage() {
     });
   }, []);
 
-  // Toggle KO <-> EN language
   const handleToggleLanguage = () => {
     setLanguage((prev) => (prev === 'KO' ? 'EN' : 'KO'));
   };
 
-  // Calculate distance for all mock jobs relative to user's current location
+  // Calculate distance for all mock jobs relative to user's location
   const jobsWithDistance = useMemo(() => {
     return MOCK_JOBS.map((job) => {
       const distanceKm = calculateHaversineDistance(
@@ -64,13 +71,17 @@ export default function HomePage() {
     });
   }, [userLocation]);
 
-  // Filter jobs based on radius option, visa filter, and search keyword
+  // Filter jobs based on radius option, category, visa filter, and search keyword
   const filteredJobs = useMemo(() => {
     return jobsWithDistance
       .filter((job) => {
         // Radius filter (30km default)
         if (selectedRadius !== 0 && job.distanceKm !== undefined) {
           if (job.distanceKm > selectedRadius) return false;
+        }
+        // Category filter (F&B, Lodging/Cleaning, etc.)
+        if (selectedCategory !== 'ALL') {
+          if (job.category !== selectedCategory) return false;
         }
         // Visa filter
         if (selectedVisa !== 'ALL') {
@@ -87,7 +98,7 @@ export default function HomePage() {
         return true;
       })
       .sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
-  }, [jobsWithDistance, selectedRadius, selectedVisa, searchKeyword]);
+  }, [jobsWithDistance, selectedRadius, selectedCategory, selectedVisa, searchKeyword]);
 
   const handleApply = (job: JobPost) => {
     setAppliedJob(job);
@@ -104,18 +115,31 @@ export default function HomePage() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8">
-        {/* IP Location Status Bar */}
-        <div className="mb-6 p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between text-xs text-indigo-200">
+        {/* IP Location & Permission Status Indicator Bar */}
+        <div className="mb-6 p-3.5 rounded-2xl bg-indigo-950/50 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-indigo-200">
           <div className="flex items-center gap-2">
             <Navigation className={`w-4 h-4 text-emerald-400 ${isLocating ? 'animate-spin' : ''}`} />
             <span>
               <strong>{t.ipDetected}:</strong> {userLocation.address}
             </span>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
-            30km 반경 자동 감지 완료
-          </span>
+          <div className="flex items-center gap-2">
+            {!userLocation.isGranted && (
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                위치 미동의 ➔ 캘리포니아 한인타운 기본 설정
+              </span>
+            )}
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+              30km 반경 자동 세팅
+            </span>
+          </div>
         </div>
+
+        {/* 24h Gemini AI Country News Ticker */}
+        <NewsTicker
+          countryCode={userLocation.countryCode}
+          countryName={userLocation.countryName}
+        />
 
         {/* Hero Section */}
         <section className="mb-10 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-8 p-6 md:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 relative overflow-hidden">
@@ -124,25 +148,53 @@ export default function HomePage() {
           <div className="max-w-2xl relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-4">
               <Sparkles className="w-4 h-4 text-indigo-400" />
-              {t.heroTag}
+              한인식당 · 카페 (F&B) & 숙박 · 청소 특화 채용 플랫폼
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight mb-4">
               {t.heroTitle1} <br />
-              <span className="text-gradient">{t.heroTitle2}</span>
-              {t.heroTitle3}
+              <span className="text-gradient">F&B 식당·카페 & 숙박·청소</span>
+              일자리
             </h1>
 
             <p className="text-slate-300 text-sm sm:text-base mb-6 font-normal leading-relaxed">
-              {t.heroDesc}
+              접속 위치 기반 30km 반경 구글지도에서 고용 희망 업체의 정확한 주소와 실시간 비자 스폰서십 구인 정보를 확인하세요.
             </p>
+
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              {[
+                { id: 'ALL', label: '전체 업종', icon: Sparkles },
+                { id: 'F_AND_B', label: 'F&B (한인식당/카페)', icon: Utensils },
+                { id: 'LODGING_CLEANING', label: '숙박 & 청소', icon: Hotel },
+                { id: 'LOGISTICS', label: '물류 & 현장', icon: Truck },
+                { id: 'TECH', label: '기술 & IT', icon: Cpu },
+              ].map((cat) => {
+                const IconComp = cat.icon;
+                const isActive = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id as JobCategory)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-md shadow-emerald-500/20 font-extrabold'
+                        : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                    }`}
+                  >
+                    <IconComp className="w-3.5 h-3.5" />
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Keyword Search Input */}
             <div className="flex items-center gap-2 p-2 rounded-2xl glass-panel border border-slate-700 max-w-xl">
               <Search className="w-5 h-5 text-slate-400 ml-2 shrink-0" />
               <input
                 type="text"
-                placeholder={t.searchPlaceholder}
+                placeholder="식당 조리장, 카페 바리스타, 청소 관리자, 업체 주소 검색..."
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 className="bg-transparent border-none outline-none text-sm text-white placeholder-slate-500 w-full px-2 py-1.5"
@@ -164,7 +216,7 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-wrap gap-1.5">
-              {['ALL', 'E-7', 'F-4', 'F-6', 'H-1', 'D-10'].map((visa) => (
+              {['ALL', 'E-2', 'H-2B', 'J-1', 'OPT', 'F-4', '영주권'].map((visa) => (
                 <button
                   key={visa}
                   onClick={() => setSelectedVisa(visa)}
@@ -189,7 +241,7 @@ export default function HomePage() {
           totalMatchCount={filteredJobs.length}
         />
 
-        {/* Google Maps View Component (30km Radius Interactive Map) */}
+        {/* Google Maps View Component (30km Radius Interactive Map with Employer Addresses) */}
         <GoogleMapView
           userLocation={userLocation}
           radiusKm={selectedRadius}
@@ -202,11 +254,11 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-indigo-400" />
-                반경 내 추천 채용 공고
+                <Utensils className="w-5 h-5 text-emerald-400" />
+                한인식당·카페 & 숙박·청소 업체 채용 공고
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                가장 근거리에 위치한 매칭 공고순으로 자동 정렬됩니다.
+                고용 희망 업체의 실제 주소와 30km 반경 근거리 매칭 순으로 자동 표시됩니다.
               </p>
             </div>
 
@@ -248,6 +300,7 @@ export default function HomePage() {
               <button
                 onClick={() => {
                   setSelectedRadius(150);
+                  setSelectedCategory('ALL');
                   setSelectedVisa('ALL');
                   setSearchKeyword('');
                 }}
@@ -282,8 +335,8 @@ export default function HomePage() {
             </p>
 
             <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 mb-6 flex justify-between">
-              <span>AI 매칭 점수:</span>
-              <span className="text-emerald-400 font-bold">{appliedJob.matchScore}% Match</span>
+              <span>업체 주소:</span>
+              <span className="text-indigo-300 font-semibold truncate max-w-[200px]">{appliedJob.locationName}</span>
             </div>
 
             <button
@@ -307,7 +360,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 font-semibold text-slate-400">
             <span>KHIRE Platform</span>
             <span>·</span>
-            <span>{t.brandTagline}</span>
+            <span>한인식당/카페 & 숙박/청소 전문 구인구직</span>
           </div>
           <div>© 2026 KHIRE Inc. All rights reserved. (khire.net)</div>
         </div>

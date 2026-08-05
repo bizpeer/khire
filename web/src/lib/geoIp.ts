@@ -1,8 +1,18 @@
 import { UserLocation } from '@/types/job';
-import { INITIAL_USER_LOCATION } from '@/lib/mockJobs';
+
+// California LA Koreatown Default Location (Location permission denied fallback)
+export const LA_KOREATOWN_LOCATION: UserLocation = {
+  address: '미국 캘리포니아 로스앤젤레스 한인타운 (LA Koreatown, CA 90010)',
+  latitude: 34.0618,
+  longitude: -118.3000,
+  countryCode: 'US',
+  countryName: '미국 (USA - California)',
+  isGranted: false,
+};
 
 /**
- * Detects user's current location via Browser Geolocation API or GeoIP fallback
+ * Detects user's current location via Browser Geolocation API or GeoIP fallback.
+ * If permission is denied or fails, defaults to California LA Koreatown.
  */
 export async function detectUserLocation(): Promise<UserLocation> {
   return new Promise((resolve) => {
@@ -15,6 +25,9 @@ export async function detectUserLocation(): Promise<UserLocation> {
             address: `GPS 접속 위치 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
             latitude,
             longitude,
+            countryCode: 'KR',
+            countryName: '대한민국 (Korea)',
+            isGranted: true,
           });
         },
         async () => {
@@ -22,7 +35,7 @@ export async function detectUserLocation(): Promise<UserLocation> {
           const fallback = await fetchGeoIp();
           resolve(fallback);
         },
-        { timeout: 4000 }
+        { timeout: 3000 }
       );
     } else {
       fetchGeoIp().then(resolve);
@@ -37,14 +50,18 @@ async function fetchGeoIp(): Promise<UserLocation> {
       const data = await res.json();
       if (data.latitude && data.longitude) {
         return {
-          address: `${data.city || '접속 위치'} (${data.ip || 'IP Location'})`,
+          address: `${data.city || '접속 지역'}, ${data.region || ''} ${data.country_name || ''}`,
           latitude: data.latitude,
           longitude: data.longitude,
+          countryCode: data.country_code || 'US',
+          countryName: `${data.country_name || '미국'} (${data.country_code || 'US'})`,
+          isGranted: true,
         };
       }
     }
   } catch (e) {
-    console.warn('GeoIP fetch failed, fallback to default location:', e);
+    console.warn('GeoIP fetch failed, fallback to LA Koreatown:', e);
   }
-  return INITIAL_USER_LOCATION;
+  // Default to California LA Koreatown if permission is not granted / failed
+  return LA_KOREATOWN_LOCATION;
 }

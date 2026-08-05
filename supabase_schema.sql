@@ -1,6 +1,7 @@
 -- ====================================================================
 -- KHIRE Platform - Supabase PostgreSQL Database Schema (v2.0)
 -- PostGIS, pgvector, 30km Radius Search, $1 PayPal Payment & 7-Day Auto Expiry
+-- Idempotent & Re-runnable Script (Supabase SQL Editor Ready)
 -- ====================================================================
 
 -- 1. Enable Required Extensions
@@ -8,13 +9,27 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Custom Enum Types
-CREATE TYPE role_enum AS ENUM ('APPLICANT', 'EMPLOYER', 'ADMIN');
-CREATE TYPE auth_provider_enum AS ENUM ('LOCAL', 'GOOGLE', 'APPLE');
-CREATE TYPE job_status_enum AS ENUM ('DRAFT', 'PENDING', 'ACTIVE', 'CLOSED', 'EXPIRED');
-CREATE TYPE payment_status_enum AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
-CREATE TYPE apply_status_enum AS ENUM ('APPLIED', 'REVIEWING', 'INTERVIEW', 'ACCEPTED', 'REJECTED');
-CREATE TYPE job_category_enum AS ENUM ('F_AND_B', 'LODGING_CLEANING', 'LOGISTICS', 'TECH');
+-- 2. Custom Enum Types (Idempotent safe checks)
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_enum') THEN
+        CREATE TYPE role_enum AS ENUM ('APPLICANT', 'EMPLOYER', 'ADMIN');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'auth_provider_enum') THEN
+        CREATE TYPE auth_provider_enum AS ENUM ('LOCAL', 'GOOGLE', 'APPLE');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'job_status_enum') THEN
+        CREATE TYPE job_status_enum AS ENUM ('DRAFT', 'PENDING', 'ACTIVE', 'CLOSED', 'EXPIRED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status_enum') THEN
+        CREATE TYPE payment_status_enum AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'apply_status_enum') THEN
+        CREATE TYPE apply_status_enum AS ENUM ('APPLIED', 'REVIEWING', 'INTERVIEW', 'ACCEPTED', 'REJECTED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'job_category_enum') THEN
+        CREATE TYPE job_category_enum AS ENUM ('F_AND_B', 'LODGING_CLEANING', 'LOGISTICS', 'TECH');
+    END IF;
+END $$;
 
 -- 3. Users Table
 CREATE TABLE IF NOT EXISTS public.users (
@@ -224,17 +239,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER trg_users_location BEFORE INSERT OR UPDATE ON public.users
+DROP TRIGGER IF EXISTS trg_users_location ON public.users;
+CREATE TRIGGER trg_users_location BEFORE INSERT OR UPDATE ON public.users
 FOR EACH ROW EXECUTE FUNCTION public.update_location_geom();
 
-CREATE OR REPLACE TRIGGER trg_companies_location BEFORE INSERT OR UPDATE ON public.companies
+DROP TRIGGER IF EXISTS trg_companies_location ON public.companies;
+CREATE TRIGGER trg_companies_location BEFORE INSERT OR UPDATE ON public.companies
 FOR EACH ROW EXECUTE FUNCTION public.update_location_geom();
 
-CREATE OR REPLACE TRIGGER trg_jobs_location BEFORE INSERT OR UPDATE ON public.jobs
+DROP TRIGGER IF EXISTS trg_jobs_location ON public.jobs;
+CREATE TRIGGER trg_jobs_location BEFORE INSERT OR UPDATE ON public.jobs
 FOR EACH ROW EXECUTE FUNCTION public.update_location_geom();
 
 -- ====================================================================
--- 13. Supabase Row Level Security (RLS) Policies
+-- 13. Supabase Row Level Security (RLS) Policies (Safe Re-execution)
 -- ====================================================================
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
@@ -242,22 +260,21 @@ ALTER TABLE public.resumes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.job_payments ENABLE ROW LEVEL SECURITY;
 
--- Public read for active job postings
+DROP POLICY IF EXISTS "Public Read Active Jobs" ON public.jobs;
 CREATE POLICY "Public Read Active Jobs" ON public.jobs
     FOR SELECT USING (status = 'ACTIVE');
 
--- Employer insert/update their own jobs
+DROP POLICY IF EXISTS "Employer Manage Own Jobs" ON public.jobs;
 CREATE POLICY "Employer Manage Own Jobs" ON public.jobs
     FOR ALL USING (auth.uid() = (SELECT user_id FROM public.companies WHERE id = company_id));
 
--- Public read for companies
+DROP POLICY IF EXISTS "Public Read Companies" ON public.companies;
 CREATE POLICY "Public Read Companies" ON public.companies
     FOR SELECT USING (true);
 
 -- ====================================================================
 -- 14. Initial Admin Account Seed Data
 -- ====================================================================
--- Note: Replace password hash with secure environment variable in production
 INSERT INTO public.users (id, email, password_hash, role, auth_provider, name)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
@@ -270,5 +287,3 @@ VALUES (
 ON CONFLICT (email) DO UPDATE 
 SET role = 'ADMIN',
     name = 'KHIRE System Admin';
-
-

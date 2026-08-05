@@ -1,0 +1,163 @@
+// This is your Prisma schema file for KHIRE Platform
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis, vector]
+}
+
+enum Role {
+  APPLICANT
+  EMPLOYER
+  ADMIN
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  APPLE
+}
+
+enum JobStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  CLOSED
+}
+
+enum ApplyStatus {
+  APPLIED
+  REVIEWING
+  INTERVIEW
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  passwordHash  String?
+  role          Role         @default(APPLICANT)
+  authProvider  AuthProvider @default(LOCAL)
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  company       Company?
+  resumes       Resume[]
+  applies       JobApply[]
+  sentMessages  Message[]    @relation("SentMessages")
+  recvMessages  Message[]    @relation("RecvMessages")
+}
+
+model Company {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  ceoName       String?
+  bizRegNumber  String?  @unique
+  website       String?
+  address       String
+  latitude      Float
+  longitude     Float
+  description   String?
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  jobs          Job[]
+}
+
+model Resume {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  name            String
+  birthDate       String?
+  gender          String?
+  desiredRegion   String?
+  profileImageUrl String?
+  mediaUrl        String?
+  aiSummary       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  applies         JobApply[]
+  educations      ResumeEducation[]
+  careers         ResumeCareer[]
+}
+
+model ResumeEducation {
+  id          String   @id @default(uuid())
+  resumeId    String
+  resume      Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  schoolName  String
+  major       String?
+  gradYear    String?
+}
+
+model ResumeCareer {
+  id          String   @id @default(uuid())
+  resumeId    String
+  resume      Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  companyName String
+  position    String
+  period      String?
+  description String?
+}
+
+model Job {
+  id                 String    @id @default(uuid())
+  companyId          String
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title              String
+  salaryType         String?
+  salaryAmount       String?
+  address            String
+  latitude           Float
+  longitude          Float
+  employmentType     String    @default("Full-time")
+  experienceRequired String?
+  educationRequired  String?
+  benefits           String?
+  recruitsCount      Int       @default(1)
+  deadline           DateTime?
+  status             JobStatus @default(ACTIVE)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  applies            JobApply[]
+}
+
+model JobApply {
+  id           String      @id @default(uuid())
+  jobId        String
+  job          Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId     String
+  resume       Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  aiMatchScore Float?
+  status       ApplyStatus @default(APPLIED)
+  appliedAt    DateTime    @default(now())
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  channelId  String
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("RecvMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+}

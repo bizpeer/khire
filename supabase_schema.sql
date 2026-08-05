@@ -253,3 +253,22 @@ CREATE POLICY "Employer Manage Own Jobs" ON public.jobs
 -- Public read for companies
 CREATE POLICY "Public Read Companies" ON public.companies
     FOR SELECT USING (true);
+
+-- ====================================================================
+-- 14. Initial Admin Account Seed Data
+-- ====================================================================
+-- Note: Replace password hash with secure environment variable in production
+INSERT INTO public.users (id, email, password_hash, role, auth_provider, name)
+VALUES (
+    '00000000-0000-0000-0000-000000000001',
+    'siteadmin@khire.net',
+    '$2b$10$e846zK7qL1U/2QvW.7O6/.SECURE_HASHED_PASSWORD_PLACEHOLDER',
+    'ADMIN',
+    'LOCAL',
+    'KHIRE System Admin'
+)
+ON CONFLICT (email) DO UPDATE 
+SET role = 'ADMIN',
+    name = 'KHIRE System Admin';
+
+

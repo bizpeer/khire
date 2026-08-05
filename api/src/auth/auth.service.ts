@@ -19,6 +19,19 @@ export class AuthService {
   private users: Map<string, any> = new Map();
   private companies: Map<string, any> = new Map();
 
+  constructor() {
+    // Initial System Admin Account Seed (Credentials fetched from process.env)
+    const adminUser = {
+      id: 'usr-admin-001',
+      email: process.env.ADMIN_EMAIL || 'admin@khire.net',
+      password: process.env.ADMIN_PASSWORD || undefined,
+      role: 'ADMIN',
+      name: 'KHIRE System Admin',
+      createdAt: new Date(),
+    };
+    this.users.set(adminUser.id, adminUser);
+  }
+
   async register(dto: RegisterDto) {
     const existing = Array.from(this.users.values()).find((u) => u.email === dto.email);
     if (existing) {

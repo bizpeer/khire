@@ -29,7 +29,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               KHIRE 플랫폼 통합 관리자 대시보드 (Admin Portal)
               <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded font-mono">
-                v1.0 Live
+                Admin
               </span>
             </h3>
             <p className="text-xs text-slate-400">회원, 기업, 공고 승인, AI 사용량 및 거리검색 실시간 통계 모니터링</p>

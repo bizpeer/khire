@@ -23,7 +23,7 @@ export default function UserProfileModal({
   onModeSwitch,
 }: UserProfileModalProps) {
   const [name, setName] = useState(userName || '홍길동');
-  const [countryCode, setCountryCode] = useState('+1');
+  const [countryCode, setCountryCode] = useState('+61');
   const [isCustomCountry, setIsCustomCountry] = useState(false);
   const [customCountryCode, setCustomCountryCode] = useState('+82');
   const [phoneNum, setPhoneNum] = useState('213-123-4567');

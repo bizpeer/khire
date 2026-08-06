@@ -36,11 +36,11 @@ export default function HomePage() {
   const [selectedDetailJob, setSelectedDetailJob] = useState<JobPost | null>(null);
 
   const [userLocation, setUserLocation] = useState<UserLocation>({
-    address: '미국 캘리포니아 로스앤젤레스 한인타운 (LA Koreatown)',
-    latitude: 34.0618,
-    longitude: -118.3000,
-    countryCode: 'US',
-    countryName: '미국 (USA)',
+    address: '호주 시드니 스트라스필드 한인타운 (Sydney NSW 2135, Australia)',
+    latitude: -33.8688,
+    longitude: 151.2093,
+    countryCode: 'AU',
+    countryName: '호주 (Australia)',
     isGranted: false,
   });
   const [isLocating, setIsLocating] = useState<boolean>(true);

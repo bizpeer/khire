@@ -12,14 +12,9 @@ interface AuthModalProps {
 }
 
 export const COUNTRY_CODES = [
-  { code: '+1', country: '미국 / 캐나다 (USA / Canada)', flag: '🇺🇸' },
-  { code: '+82', country: '대한민국 (Korea)', flag: '🇰🇷' },
   { code: '+61', country: '호주 (Australia)', flag: '🇦🇺' },
-  { code: '+81', country: '일본 (Japan)', flag: '🇯🇵' },
-  { code: '+86', country: '중국 (China)', flag: '🇨🇳' },
-  { code: '+52', country: '멕시코 (Mexico)', flag: '🇲🇽' },
-  { code: '+44', country: '영국 (UK)', flag: '🇬🇧' },
-  { code: '+49', country: '독일 (Germany)', flag: '🇩🇪' },
+  { code: '+64', country: '뉴질랜드 (New Zealand)', flag: '🇳🇿' },
+  { code: '+82', country: '대한민국 (Korea)', flag: '🇰🇷' },
 ];
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
@@ -32,7 +27,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [passwordConfirm, setPasswordConfirm] = useState('');
 
   // Phone with Country Code (Supports direct manual input +xx, +xxx)
-  const [countryCode, setCountryCode] = useState('+1');
+  const [countryCode, setCountryCode] = useState('+61');
   const [isCustomCountry, setIsCustomCountry] = useState(false);
   const [customCountryCode, setCustomCountryCode] = useState('+82');
   const [mobileNumber, setMobileNumber] = useState('');

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MapPin, Sparkles, User, Bell, ShieldCheck, Globe, PlusCircle } from 'lucide-react';
+import { MapPin, Sparkles, User, Bell, Globe, ChevronDown, PlusCircle } from 'lucide-react';
 import { Language, DICTIONARY } from '@/lib/i18n';
 
 interface HeaderProps {
@@ -16,6 +16,7 @@ interface HeaderProps {
   isLoggedIn?: boolean;
   userEmail?: string;
   onLogout?: () => void;
+  currentAddress?: string;
 }
 
 export default function Header({
@@ -29,122 +30,85 @@ export default function Header({
   isLoggedIn = false,
   userEmail,
   onLogout,
+  currentAddress = 'Sydney Strathfield',
 }: HeaderProps) {
   const t = DICTIONARY[language];
 
   return (
-    <header className="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-indigo-500 p-[2px] shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
-              KHIRE
-              <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                {t.badgeAiRadius}
-              </span>
-            </span>
-            <span className="text-[11px] text-slate-400 tracking-tight font-medium">
-              {t.brandTagline}
-            </span>
-          </div>
-        </Link>
+    <header className="fixed top-0 w-full z-50 bg-[#101828]/70 backdrop-blur-xl border-b border-white/10 shadow-sm flex justify-between items-center px-4 md:px-8 h-16 transition-all duration-300">
+      {/* Left: Location Selector */}
+      <button
+        onClick={onOpenProfile}
+        className="flex items-center gap-1.5 text-slate-300 hover:text-amber-300 transition-opacity active:scale-95 duration-200 cursor-pointer group"
+      >
+        <span className="material-symbols-outlined text-[20px] text-amber-400 group-hover:scale-110 transition-transform">
+          location_on
+        </span>
+        <span className="text-xs font-semibold tracking-tight text-slate-200 max-w-[140px] sm:max-w-none truncate">
+          {currentAddress}
+        </span>
+        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+      </button>
 
-        {/* Global Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-300">
-          <Link
-            href="/"
-            className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-emerald-400"
-          >
-            <MapPin className="w-4 h-4 text-emerald-400" />
-            <span>{t.navDistance}</span>
-          </Link>
-          <Link
-            href="#ai-match"
-            className="hover:text-emerald-400 transition-colors flex items-center gap-1.5"
-          >
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span>{t.navAiMatch}</span>
-          </Link>
-        </nav>
+      {/* Center Logo */}
+      <Link
+        href="/"
+        className="text-xl md:text-2xl font-black tracking-tighter text-[#ffc174] hover:opacity-90 transition-opacity absolute left-1/2 -translate-x-1/2 flex items-center gap-1"
+      >
+        <span>KHIRE</span>
+        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
+          AU/NZ AI
+        </span>
+      </Link>
 
-        {/* Right Action Items */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Language Switcher Toggle KO / EN */}
-          <button
-            onClick={onToggleLanguage}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-bold transition-all shadow-sm"
-            title="언어 변경 (Language Switcher)"
-            aria-label="Toggle language"
-          >
-            <Globe className="w-4 h-4 text-emerald-400" />
-            <span>{language === 'KO' ? '한국어 🇰🇷' : 'English 🇺🇸'}</span>
-          </button>
+      {/* Right Controls */}
+      <div className="flex items-center gap-2">
+        {/* Language Switcher */}
+        <button
+          onClick={onToggleLanguage}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/10 text-[11px] font-bold transition shadow-sm"
+          title="Language Switcher"
+        >
+          <Globe className="w-3.5 h-3.5 text-amber-400" />
+          <span>{language === 'KO' ? 'KO 🇰🇷' : 'EN 🇺🇸'}</span>
+        </button>
 
-          <button
-            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800/60 transition-colors relative"
-            title="알림"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          </button>
+        {/* Post Job Quick Button */}
+        <button
+          onClick={onOpenJobPost}
+          className="hidden sm:flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-extrabold transition"
+        >
+          <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
+          <span>공고 등록 ($1)</span>
+        </button>
 
-          <button
-            onClick={onOpenResume}
-            className="hidden sm:flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition-all"
-          >
-            <User className="w-4 h-4 text-emerald-400" />
-            <span>{t.navResume}</span>
-          </button>
-
-          <button
-            onClick={onOpenJobPost}
-            className="hidden md:flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition-all shadow-sm"
-          >
-            <PlusCircle className="w-4 h-4 text-amber-400" />
-            <span>{t.navPostJob}</span>
-          </button>
-
-          {isLoggedIn ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onOpenUserDashboard}
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-extrabold text-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md transition"
-              >
-                <Sparkles className="w-4 h-4 text-emerald-300" />
-                <span>마이 대시보드</span>
-              </button>
-
-              <button
-                onClick={onOpenProfile}
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-300 px-3 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800 transition cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{userEmail || '로그인 회원'}</span>
-              </button>
-              <button
-                onClick={onLogout}
-                className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"
-              >
-                로그아웃
-              </button>
-            </div>
-          ) : (
+        {isLoggedIn ? (
+          <div className="flex items-center gap-2">
             <button
-              onClick={onOpenAuth}
-              className="flex items-center gap-2 text-xs font-extrabold px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 transition-all"
+              onClick={onOpenUserDashboard}
+              className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-extrabold transition flex items-center gap-1"
             >
-              <User className="w-3.5 h-3.5 text-slate-950" />
-              <span>로그인 / 회원가입</span>
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">대시보드</span>
             </button>
-          )}
-        </div>
+
+            <button
+              onClick={onOpenProfile}
+              className="w-8 h-8 rounded-full overflow-hidden border border-white/10 hover:border-amber-400 transition-colors flex items-center justify-center bg-slate-900"
+              title={userEmail}
+            >
+              <span className="material-symbols-outlined text-slate-300 text-lg">person</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onOpenAuth}
+            className="px-3.5 py-1.5 rounded-full bg-[#ffc174] hover:bg-[#ffb95f] text-slate-950 font-extrabold text-xs shadow-md transition flex items-center gap-1 cursor-pointer active:scale-95"
+          >
+            <span className="material-symbols-outlined text-base">lock</span>
+            <span>로그인</span>
+          </button>
+        )}
       </div>
     </header>
   );

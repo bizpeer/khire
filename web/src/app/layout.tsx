@@ -123,6 +123,10 @@ export default function RootLayout({
       className={`${plusJakartaSans.variable} ${notoSansKr.variable} h-full antialiased dark`}
     >
       <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

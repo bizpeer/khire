@@ -1,5 +1,8 @@
 'use client';
 
+import React, { useState } from 'react';
+import { X, Lock, Mail, User, Phone, MapPin, Building2, CheckCircle2, Globe, Search, ExternalLink, ShieldCheck } from 'lucide-react';
+import TermsModal from '@/components/TermsModal';
 import GoogleAddressPicker from '@/components/GoogleAddressPicker';
 
 interface AuthModalProps {

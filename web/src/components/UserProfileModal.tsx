@@ -27,7 +27,7 @@ export default function UserProfileModal({
   const [isCustomCountry, setIsCustomCountry] = useState(false);
   const [customCountryCode, setCustomCountryCode] = useState('+82');
   const [phoneNum, setPhoneNum] = useState('213-123-4567');
-  const [address, setAddress] = useState('3832 Wilshire Blvd, Los Angeles, CA 90010 (LA 한인타운)');
+  const [address, setAddress] = useState('보문로 9길 48');
   const [bizRegNumber, setBizRegNumber] = useState('123-45-67890');
   const [isSaved, setIsSaved] = useState(false);
 

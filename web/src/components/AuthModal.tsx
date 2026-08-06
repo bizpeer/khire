@@ -38,7 +38,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [mobileNumber, setMobileNumber] = useState('');
 
   // Google Maps Address Selection (No Apt / Room details collected)
-  const [address, setAddress] = useState('3832 Wilshire Blvd, Los Angeles, CA 90010 (LA 한인타운)');
+  const [address, setAddress] = useState('');
 
   // Business Reg Number (Optional)
   const [bizRegNumber, setBizRegNumber] = useState('');

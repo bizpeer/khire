@@ -5,6 +5,7 @@ import { supabase } from './supabaseClient';
 const JOBS_STORAGE_KEY = 'khire_jobs_database_v2';
 const APPLICATIONS_STORAGE_KEY = 'khire_job_applications_v2';
 const REVIEWS_STORAGE_KEY = 'khire_daangn_reviews_v1';
+const PAYMENTS_STORAGE_KEY = 'khire_paypal_payments_v1';
 
 export interface JobApplication {
   id: string;
@@ -17,6 +18,20 @@ export interface JobApplication {
   appliedAt: string;
   resumeSummary?: string;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+}
+
+export interface PaymentRecord {
+  id: string;
+  paypalOrderId: string;
+  employerEmail: string;
+  companyName: string;
+  jobTitle: string;
+  adTier: 'STANDARD' | 'PREMIUM_30';
+  amount: number;
+  currency: string;
+  status: 'APPROVED' | 'COMPLETED';
+  paidAt: string;
+  hostedButtonId: string;
 }
 
 // Initial default jobs tagged as Khire Official Example Employers
@@ -75,6 +90,23 @@ export async function saveJobToDB(newJob: JobPost): Promise<JobPost[]> {
     const existing = await getJobsFromDB();
     updatedJobs = [newJob, ...existing];
     localStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(updatedJobs));
+
+    // Also record PayPal transaction if paid
+    if (newJob.isPaid) {
+      savePaymentRecordToDB({
+        id: `pay-${Date.now()}`,
+        paypalOrderId: newJob.originalJobId || `PAYPAL-${Date.now()}`,
+        employerEmail: 'employer@khire.net',
+        companyName: newJob.companyName,
+        jobTitle: newJob.title,
+        adTier: newJob.isPremiumAd ? 'PREMIUM_30' : 'STANDARD',
+        amount: newJob.adPrice || 1.0,
+        currency: 'USD',
+        status: 'APPROVED',
+        paidAt: newJob.paidAt || new Date().toISOString(),
+        hostedButtonId: newJob.isPremiumAd ? 'GEY6YHWRDH54E' : 'R5JUWLNA7ZJJA',
+      });
+    }
   }
 
   try {
@@ -193,6 +225,37 @@ export async function saveApplicationToDB(app: Omit<JobApplication, 'id' | 'appl
   }
 
   return newApp;
+}
+
+/**
+ * Save PayPal Payment Record to DB
+ */
+export function savePaymentRecordToDB(record: PaymentRecord): PaymentRecord[] {
+  let records: PaymentRecord[] = [];
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(PAYMENTS_STORAGE_KEY);
+    const existing = saved ? JSON.parse(saved) : [];
+    records = [record, ...existing];
+    localStorage.setItem(PAYMENTS_STORAGE_KEY, JSON.stringify(records));
+  }
+  return records;
+}
+
+/**
+ * Fetch all PayPal Payment Records from DB
+ */
+export function getPaymentRecordsFromDB(): PaymentRecord[] {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(PAYMENTS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+  }
+  return [];
 }
 
 /**

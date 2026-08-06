@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, CreditCard, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Calendar, AlertCircle, Image as ImageIcon, RotateCcw, Copy, Upload, Link as LinkIcon, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, CreditCard, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Calendar, AlertCircle, Image as ImageIcon, RotateCcw, Copy, Upload, Link as LinkIcon, Trash2, Zap, Lock } from 'lucide-react';
 import { JobCategory, JobPost } from '@/types/job';
 import { MOCK_JOBS } from '@/lib/mockJobs';
 import { saveJobToDB } from '@/lib/jobService';
@@ -12,7 +12,11 @@ interface JobPostModalProps {
   onJobCreated?: (newJob: JobPost) => void;
 }
 
-export const PAYPAL_PAYMENT_URL = 'https://www.paypal.com/ncp/payment/R5JUWLNA7ZJJA';
+export const PAYPAL_STANDARD_URL = 'https://www.paypal.com/ncp/payment/R5JUWLNA7ZJJA';
+export const PAYPAL_PREMIUM_URL = 'https://www.paypal.com/ncp/payment/GEY6YHWRDH54E';
+
+export const PAYPAL_STANDARD_BUTTON_ID = 'R5JUWLNA7ZJJA';
+export const PAYPAL_PREMIUM_BUTTON_ID = 'GEY6YHWRDH54E';
 
 export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostModalProps) {
   const [title, setTitle] = useState('');
@@ -29,7 +33,7 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
   const [workPeriod, setWorkPeriod] = useState('3개월 이상 / 장기 우대');
   const [benefitsInput, setBenefitsInput] = useState('식사 제공, 주휴수당, 유니폼 지원, 초보 가능, 친구 동반 지원');
 
-  // Image Upload States (URL vs Direct File Upload)
+  // Image Upload States
   const [imageInputMode, setImageInputMode] = useState<'URL' | 'FILE'>('FILE');
   const [imageUrl, setImageUrl] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -37,8 +41,64 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
   const [step, setStep] = useState<'FORM' | 'PAYMENT' | 'SUCCESS'>('FORM');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ad Tier: Standard ($1.00 USD) vs Premium ($30.00 USD)
   const [selectedAdTier, setSelectedAdTier] = useState<'STANDARD' | 'PREMIUM_30'>('STANDARD');
   const adPrice = selectedAdTier === 'PREMIUM_30' ? 30.00 : 1.00;
+  const currentHostedButtonId = selectedAdTier === 'PREMIUM_30' ? PAYPAL_PREMIUM_BUTTON_ID : PAYPAL_STANDARD_BUTTON_ID;
+  const currentPaypalUrl = selectedAdTier === 'PREMIUM_30' ? PAYPAL_PREMIUM_URL : PAYPAL_STANDARD_URL;
+
+  const [paypalApproved, setPaypalApproved] = useState(false);
+
+  // Dynamically load PayPal Hosted Buttons SDK when step enters PAYMENT
+  useEffect(() => {
+    if (!isOpen || step !== 'PAYMENT') return;
+
+    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'Afp-Bd2GA_eoz-KhptZiUK1A25suV-PRFPDVdZLFqnX3pa03aIb4nMlM8J7MwWcHnWxQ5ZoZJKz_YMQU';
+    const scriptId = 'paypal-js-sdk-script';
+
+    const renderHostedButtons = () => {
+      const containerId = `#paypal-container-${currentHostedButtonId}`;
+      const containerElem = document.querySelector(containerId);
+      if (containerElem) {
+        containerElem.innerHTML = ''; // Clear previous container
+      }
+
+      // @ts-ignore
+      if (window.paypal && window.paypal.HostedButtons) {
+        try {
+          // @ts-ignore
+          window.paypal
+            .HostedButtons({
+              hostedButtonId: currentHostedButtonId,
+              onApprove: function (data: any) {
+                alert(`PayPal 결제가 성공적으로 승인되었습니다! (Order ID: ${data?.orderID || currentHostedButtonId})`);
+                setPaypalApproved(true);
+                handleCompletePostAndPayment({
+                  paymentId: data?.orderID || `PAYPAL-${Date.now()}`,
+                  status: 'APPROVED',
+                });
+              },
+            })
+            .render(containerId);
+        } catch (err) {
+          console.warn('PayPal HostedButtons render warning:', err);
+        }
+      }
+    };
+
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&components=hosted-buttons&enable-funding=venmo`;
+      script.async = true;
+      script.onload = () => {
+        setTimeout(renderHostedButtons, 300);
+      };
+      document.body.appendChild(script);
+    } else {
+      setTimeout(renderHostedButtons, 300);
+    }
+  }, [isOpen, step, selectedAdTier, currentHostedButtonId]);
 
   if (!isOpen) return null;
 
@@ -47,7 +107,6 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('이미지 파일 크기는 5MB 이하만 가능합니다.');
       return;
@@ -84,7 +143,7 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
     setStep('PAYMENT');
   };
 
-  const handleCompletePostAndPayment = async () => {
+  const handleCompletePostAndPayment = async (paypalResult?: { paymentId: string; status: string }) => {
     setIsSubmitting(true);
 
     const now = new Date();
@@ -105,7 +164,7 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
       category,
       categoryName: categoryNames[category],
       locationName: address,
-      latitude: 34.0618 + (Math.random() - 0.5) * 0.02, // Near Koreatown default
+      latitude: 34.0618 + (Math.random() - 0.5) * 0.02,
       longitude: -118.3000 + (Math.random() - 0.5) * 0.02,
       salary: salary || '시급 $20 ~ $25 (협의)',
       employmentType: 'Full-time',
@@ -133,7 +192,7 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
     };
 
     // Save to DB (Supabase + LocalStorage)
-    const updatedJobs = await saveJobToDB(newJobPost);
+    await saveJobToDB(newJobPost);
 
     if (onJobCreated) {
       onJobCreated(newJobPost);
@@ -143,13 +202,13 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
     setStep('SUCCESS');
   };
 
-  const handleOpenPayPal = () => {
-    window.open(PAYPAL_PAYMENT_URL, '_blank', 'noopener,noreferrer');
+  const handleOpenPayPalWindow = () => {
+    window.open(currentPaypalUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="glass-panel p-6 md:p-8 rounded-3xl max-w-xl w-full border border-emerald-500/30 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="glass-panel p-6 md:p-8 rounded-3xl max-w-xl w-full border border-emerald-500/30 shadow-2xl relative max-h-[90vh] overflow-y-auto my-8">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -161,10 +220,10 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
         {/* Modal Title */}
         <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-400 uppercase tracking-widest mb-1">
           <Sparkles className="w-4 h-4" />
-          <span>Employer Job Posting & PayPal Checkout</span>
+          <span>Employer Job Posting & PayPal Hosted Checkout</span>
         </div>
         <h2 className="text-xl md:text-2xl font-extrabold text-white mb-2">
-          인재채용공고 등록 ($1.00 USD / 7일 게시)
+          인재채용공고 등록 ({selectedAdTier === 'PREMIUM_30' ? '$30.00 USD 프리미엄 5초 로테이션' : '$1.00 USD / 7일 게시'})
         </h2>
 
         {/* Step SUCCESS View */}
@@ -173,18 +232,26 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
             <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto animate-bounce border border-emerald-500/50">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h3 className="text-2xl font-extrabold text-white">공고 등록 & 결제 처리 완료!</h3>
+            <h3 className="text-2xl font-extrabold text-white">PayPal 결제 승인 & 공고 등록 완료!</h3>
             <p className="text-xs text-slate-300 max-w-md mx-auto">
-              작성하신 채용공고가 DB에 실시간 저장되어 <strong className="text-emerald-400">7일(168시간)</strong> 동안 30km 반경 지도 및 채용 목록에 즉시 정식 노출됩니다.
+              {selectedAdTier === 'PREMIUM_30' ? (
+                <span>
+                  작성하신 공고가 <strong className="text-amber-300">$30 프리미엄 공고</strong>로 등록되어 상단 배너에서 <strong className="text-amber-400">5초 단위 자동 로테이션</strong>으로 최우선 게시됩니다!
+                </span>
+              ) : (
+                <span>
+                  작성하신 채용공고가 DB에 실시간 저장되어 <strong className="text-emerald-400">7일(168시간)</strong> 동안 30km 반경 지도 및 채용 목록에 정식 노출됩니다.
+                </span>
+              )}
             </p>
             <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-left text-xs space-y-1">
               <p className="text-slate-400">공고 제목: <span className="text-white font-bold">{title}</span></p>
               <p className="text-slate-400">업체명: <span className="text-white font-bold">{companyName}</span></p>
-              <p className="text-slate-400">업체 주소: <span className="text-white font-bold">{address}</span></p>
+              <p className="text-slate-400">결제 상품: <span className="text-emerald-400 font-bold">${adPrice.toFixed(2)} USD ({selectedAdTier === 'PREMIUM_30' ? '프리미엄 5초 배너' : '일반 공고'})</span></p>
             </div>
             <button
               onClick={onClose}
-              className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs tracking-wider transition"
+              className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs tracking-wider transition shadow-lg"
             >
               확인 및 닫기
             </button>
@@ -241,7 +308,7 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                     <span className="text-xs text-emerald-300 font-bold">기존 일반 공고</span>
                     <span className="text-xs font-black text-white">$1.00 USD</span>
                   </div>
-                  <p className="text-[10px] text-slate-400">7일간 근거리 목록 및 지도 노출</p>
+                  <p className="text-[10px] text-slate-400">7일간 근거리 목록 및 지도 노출 (HostedButton: R5JUWLNA7ZJJA)</p>
                 </button>
 
                 <button
@@ -254,10 +321,13 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-amber-300 font-bold">👑 $30 프리미엄 5초 광고</span>
+                    <span className="text-xs text-amber-300 font-bold flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
+                      $30 프리미엄 5초 배너
+                    </span>
                     <span className="text-xs font-black text-amber-300">$30.00 USD</span>
                   </div>
-                  <p className="text-[10px] text-zinc-400">상단 5초 단위 자동 로테이션 게시</p>
+                  <p className="text-[10px] text-zinc-400">상단 5초 단위 자동 로테이션 (HostedButton: GEY6YHWRDH54E)</p>
                 </button>
               </div>
             </div>
@@ -316,7 +386,7 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                   />
                 </div>
 
-                {/* IMAGE UPLOAD DUAL OPTION: URL OR FILE SELECTION */}
+                {/* IMAGE UPLOAD DUAL OPTION */}
                 <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-slate-300 font-bold flex items-center gap-1.5">
@@ -327,7 +397,6 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                       </span>
                     </label>
 
-                    {/* Mode Toggle Switch */}
                     <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
                       <button
                         type="button"
@@ -385,7 +454,6 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                     </div>
                   )}
 
-                  {/* Image Preview Window */}
                   {imagePreview && (
                     <div className="relative w-full h-32 rounded-xl overflow-hidden border border-emerald-500/40 group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -434,10 +502,10 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
                 >
                   <CreditCard className="w-4 h-4" />
-                  <span>다음: PayPal $1.00 USD 결제 및 공고 등록</span>
+                  <span>다음: PayPal 결제 (${adPrice.toFixed(2)} USD) 및 공고 등록</span>
                 </button>
               </form>
             ) : (
@@ -446,7 +514,9 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                 <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
                   <h3 className="font-extrabold text-white text-sm border-b border-slate-800 pb-2 flex items-center justify-between">
                     <span>결제 주문 내역 확인</span>
-                    {originalJobId && <span className="text-[10px] text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">기존 공고 재활용</span>}
+                    <span className="text-[10px] text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                      {selectedAdTier === 'PREMIUM_30' ? '👑 $30 프리미엄 5초 배너' : '$1 일반 공고'}
+                    </span>
                   </h3>
                   <div className="flex justify-between text-slate-300">
                     <span>공고 제목:</span>
@@ -456,44 +526,53 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                     <span>업체명 / 주소:</span>
                     <span className="text-slate-400 truncate max-w-[220px]">{companyName} ({address})</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
-                    <span>게시 기간:</span>
-                    <span className="text-emerald-400 font-bold flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" /> 결제 성공 시부터 정확히 7일 (168시간)
-                    </span>
-                  </div>
                   <div className="flex justify-between text-slate-300 pt-2 border-t border-slate-800 text-sm">
                     <span className="font-bold text-white">결제 금액:</span>
-                    <strong className="text-emerald-400 text-base font-extrabold">$1.00 USD</strong>
+                    <strong className={selectedAdTier === 'PREMIUM_30' ? 'text-amber-400 text-base font-extrabold' : 'text-emerald-400 text-base font-extrabold'}>
+                      ${adPrice.toFixed(2)} USD
+                    </strong>
                   </div>
                 </div>
 
-                {/* Notice Alert */}
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-[11px] flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>7일 만료 및 추가과금 안내:</strong> $1 결제 성공 시각부터 7일간 게시되며 7일 후 목록에서 자동 삭제됩니다.
-                  </span>
+                {/* PayPal Official Hosted Button Container */}
+                <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-300 text-xs flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <span>PayPal Hosted Buttons ({selectedAdTier === 'PREMIUM_30' ? '$30 ID: GEY6YHWRDH54E' : '$1 ID: R5JUWLNA7ZJJA'})</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">PayPal 보안 결제 연동</span>
+                  </div>
+
+                  {/* PayPal Hosted Button Render Container Target */}
+                  <div
+                    id={`paypal-container-${currentHostedButtonId}`}
+                    className="min-h-[50px] flex items-center justify-center p-2 rounded-xl bg-slate-900 border border-slate-800"
+                  >
+                    <span className="text-xs text-slate-400 animate-pulse">
+                      PayPal 결제 버튼 로딩 중... ({currentHostedButtonId})
+                    </span>
+                  </div>
                 </div>
 
-                {/* PayPal Checkout & Complete Buttons */}
-                <div className="space-y-3">
+                {/* Backup PayPal Direct Link & Completion Action */}
+                <div className="space-y-3 pt-2">
                   <button
-                    onClick={handleOpenPayPal}
-                    className="w-full py-4 rounded-2xl bg-[#0070ba] hover:bg-[#005ea6] text-white font-extrabold text-sm shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2 group"
+                    onClick={handleOpenPayPalWindow}
+                    className="w-full py-3.5 rounded-2xl bg-[#0070ba] hover:bg-[#005ea6] text-white font-extrabold text-xs shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2 group"
                   >
-                    <span className="text-lg font-black">PayPal</span>
-                    <span>$1.00 USD 결제창 열기 (PayPal / Card)</span>
+                    <span className="text-base font-black">PayPal</span>
+                    <span>${adPrice.toFixed(2)} USD 결제창 직접 열기 (HostedButton: {currentHostedButtonId})</span>
                     <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </button>
 
                   <button
-                    onClick={handleCompletePostAndPayment}
+                    onClick={() => handleCompletePostAndPayment({ paymentId: `PAYPAL-APPROVED-${Date.now()}`, status: 'APPROVED' })}
                     disabled={isSubmitting}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs tracking-wider uppercase shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
                   >
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>결제 승인 완료 및 공고 즉시 등록</span>
+                    <CheckCircle2 className="w-5 h-5 text-slate-950" />
+                    <span>PayPal 결제 승인 확인 및 공고 즉시 등록 (${adPrice.toFixed(2)} USD)</span>
                   </button>
 
                   <button

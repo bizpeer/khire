@@ -12,6 +12,7 @@ interface HeaderProps {
   onOpenResume?: () => void;
   onOpenJobPost?: () => void;
   onOpenAdmin?: () => void;
+  onOpenProfile?: () => void;
   isLoggedIn?: boolean;
   userEmail?: string;
   onLogout?: () => void;
@@ -24,6 +25,7 @@ export default function Header({
   onOpenResume,
   onOpenJobPost,
   onOpenAdmin,
+  onOpenProfile,
   isLoggedIn = false,
   userEmail,
   onLogout,
@@ -118,10 +120,13 @@ export default function Header({
 
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
-              <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-300 px-3 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-800">
+              <button
+                onClick={onOpenProfile}
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-300 px-3 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800 transition cursor-pointer"
+              >
                 <User className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{userEmail || '로그인 회원'}</span>
-              </span>
+              </button>
               <button
                 onClick={onLogout}
                 className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"

@@ -10,6 +10,7 @@ import ResumeModal from '@/components/ResumeModal';
 import JobPostModal from '@/components/JobPostModal';
 import JobDetailModal from '@/components/JobDetailModal';
 import PremiumAdRotationTicker from '@/components/PremiumAdRotationTicker';
+import UserProfileModal from '@/components/UserProfileModal';
 import { getJobsFromDB } from '@/lib/jobService';
 import { MOCK_JOBS, calculateHaversineDistance } from '@/lib/mockJobs';
 import { detectUserLocation } from '@/lib/geoIp';
@@ -25,6 +26,10 @@ export default function HomePage() {
   // Auth State (Non-logged in by default as per prompt)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [userProfile, setUserProfile] = useState<{ email: string; name: string } | null>(null);
+  const [userMode, setUserMode] = useState<'APPLICANT' | 'EMPLOYER'>('APPLICANT');
+
+  // Track applied jobs for rating permissions
+  const [userAppliedJobIds, setUserAppliedJobIds] = useState<string[]>([]);
 
   // Dynamic Jobs State from DB
   const [rawJobs, setRawJobs] = useState<JobPost[]>(MOCK_JOBS as JobPost[]);
@@ -49,6 +54,7 @@ export default function HomePage() {
   const [isResumeOpen, setIsResumeOpen] = useState(false);
   const [isJobPostOpen, setIsJobPostOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Load jobs from DB / LocalStorage on mount
   const refreshJobs = async () => {
@@ -75,11 +81,11 @@ export default function HomePage() {
   };
 
   // Login handler
-  const handleLoginSuccess = (email: string) => {
+  const handleLoginSuccess = (email: string, username?: string) => {
     setIsLoggedIn(true);
-    setUserProfile({ email, name: email.split('@')[0] });
+    setUserProfile({ email, name: username || email.split('@')[0] });
     setIsAuthOpen(false);
-    alert(`로그인 성공! (${email})\nKHIRE 모든 기능 및 지원하기 권한이 활성화되었습니다.`);
+    alert(`로그인 성공! (${username || email})\nKHIRE 구직 지원 및 공고 등록 권한이 완벽히 활성화되었습니다.`);
   };
 
   // Calculate distance for all jobs relative to user's location
@@ -171,6 +177,7 @@ export default function HomePage() {
         onOpenResume={handleOpenResume}
         onOpenJobPost={handleOpenJobPost}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
         isLoggedIn={isLoggedIn}
         userEmail={userProfile?.email}
         onLogout={() => {
@@ -350,7 +357,7 @@ export default function HomePage() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLoginSuccess={(email) => handleLoginSuccess(email)}
+        onLoginSuccess={(email, name) => handleLoginSuccess(email, name)}
       />
       <ResumeModal isOpen={isResumeOpen} onClose={() => setIsResumeOpen(false)} />
       <JobPostModal
@@ -364,6 +371,19 @@ export default function HomePage() {
         onClose={() => setSelectedDetailJob(null)}
         isLoggedIn={isLoggedIn}
         onOpenAuth={() => setIsAuthOpen(true)}
+        hasAppliedToJob={selectedDetailJob ? userAppliedJobIds.includes(selectedDetailJob.id) : false}
+        onApplicationSuccess={(jobId) => setUserAppliedJobIds((prev) => [...prev, jobId])}
+      />
+      <UserProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        userEmail={userProfile?.email || 'user@khire.net'}
+        userName={userProfile?.name || 'KHIRE 회원'}
+        currentMode={userMode}
+        onModeSwitch={(newMode) => {
+          setUserMode(newMode);
+          alert(`이용 모드가 [${newMode === 'APPLICANT' ? '개인 구직 지원자 모드' : '기업 고용주 모드'}]로 전환되었습니다.`);
+        }}
       />
 
       {/* Footer */}

@@ -12,6 +12,8 @@ interface JobDetailModalProps {
   onClose: () => void;
   isLoggedIn: boolean;
   onOpenAuth: () => void;
+  hasAppliedToJob?: boolean;
+  onApplicationSuccess?: (jobId: string) => void;
 }
 
 export default function JobDetailModal({
@@ -20,6 +22,8 @@ export default function JobDetailModal({
   onClose,
   isLoggedIn,
   onOpenAuth,
+  hasAppliedToJob = false,
+  onApplicationSuccess,
 }: JobDetailModalProps) {
   const [applicantName, setApplicantName] = useState('');
   const [applicantContact, setApplicantContact] = useState('');
@@ -29,6 +33,20 @@ export default function JobDetailModal({
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   if (!isOpen || !job) return null;
+
+  const handleOpenReviewModal = () => {
+    if (!isLoggedIn) {
+      alert('비로그인 상태입니다. 업체 평점 작성은 해당 공고에 실제 입사 지원을 완료한 회원만 가능합니다.');
+      return;
+    }
+
+    if (!hasAppliedToJob && !appliedSuccess) {
+      alert('당근알바 업체 평점 및 뱃지 평가는 해당 업체의 공고에 실제로 입사 지원(이력서 제출)을 완료한 구직 회원만 작성하실 수 있습니다.');
+      return;
+    }
+
+    setIsReviewModalOpen(true);
+  };
 
   const handleAttemptApply = () => {
     if (!isLoggedIn) {
@@ -54,10 +72,14 @@ export default function JobDetailModal({
       applicantName,
       applicantEmail: applicantContact,
       applicantPhone: applicantContact,
-      resumeSummary: resumeSummary || '1클릭 이력서 자동 제출',
+      resumeSummary,
     });
 
     setAppliedSuccess(true);
+    setIsApplying(false);
+    if (onApplicationSuccess) {
+      onApplicationSuccess(job.id);
+    }
   };
 
   return (
@@ -211,7 +233,7 @@ export default function JobDetailModal({
                 </div>
 
                 <button
-                  onClick={() => setIsReviewModalOpen(true)}
+                  onClick={handleOpenReviewModal}
                   className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-md transition-all flex items-center gap-1"
                 >
                   <Star className="w-3.5 h-3.5 fill-slate-950" />

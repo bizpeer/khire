@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { X, User, Mail, Phone, MapPin, Building2, ShieldCheck, CheckCircle2, RefreshCw, Globe, Search } from 'lucide-react';
-import { COUNTRY_CODES, MOCK_GOOGLE_ADDRESSES } from './AuthModal';
+import { COUNTRY_CODES } from './AuthModal';
+import GoogleAddressPicker from '@/components/GoogleAddressPicker';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -23,9 +24,10 @@ export default function UserProfileModal({
 }: UserProfileModalProps) {
   const [name, setName] = useState(userName || '홍길동');
   const [countryCode, setCountryCode] = useState('+1');
+  const [isCustomCountry, setIsCustomCountry] = useState(false);
+  const [customCountryCode, setCustomCountryCode] = useState('+82');
   const [phoneNum, setPhoneNum] = useState('213-123-4567');
-  const [address, setAddress] = useState('미국 캘리포니아 로스앤젤레스 윌셔 Blvd (LA Koreatown)');
-  const [isAddressSearching, setIsAddressSearching] = useState(false);
+  const [address, setAddress] = useState('3832 Wilshire Blvd, Los Angeles, CA 90010 (LA 한인타운)');
   const [bizRegNumber, setBizRegNumber] = useState('123-45-67890');
   const [isSaved, setIsSaved] = useState(false);
 
@@ -121,21 +123,42 @@ export default function UserProfileModal({
 
           {/* Phone with Country Code */}
           <div>
-            <label className="text-slate-300 font-bold block mb-1">
-              휴대폰 번호 (+국가번호 선택)
-            </label>
-            <div className="flex items-center gap-2">
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                className="w-32 px-2.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-bold outline-none focus:border-emerald-500 shrink-0"
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-slate-300 font-bold">
+                휴대폰 번호 (+국가번호 수동 직접 입력 지원)
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsCustomCountry(!isCustomCountry)}
+                className="text-[10px] text-emerald-400 font-bold hover:underline"
               >
-                {COUNTRY_CODES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.flag} {c.code}
-                  </option>
-                ))}
-              </select>
+                {isCustomCountry ? '목록 선택 전환' : '✏️ 수동 입력 (+xx)'}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {isCustomCountry ? (
+                <input
+                  type="text"
+                  placeholder="+82 / +1 / +xx"
+                  value={customCountryCode}
+                  onChange={(e) => setCustomCountryCode(e.target.value)}
+                  className="w-28 px-3 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/60 text-emerald-300 font-extrabold outline-none text-xs"
+                />
+              ) : (
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="w-32 px-2.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-bold outline-none focus:border-emerald-500 shrink-0 text-xs"
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.code}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus-within:border-emerald-500">
                 <Phone className="w-4 h-4 text-slate-400 shrink-0" />
                 <input
@@ -151,48 +174,17 @@ export default function UserProfileModal({
           {/* Google Maps Address (No Apt/Unit) */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-slate-300 font-bold flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                <span>주소지 (Google Maps 도로명 연동)</span>
+              <label className="text-slate-300 font-bold">
+                주소지 (Google Maps API 실시간 연동)
               </label>
-              <span className="text-[10px] text-slate-400 font-semibold">(동/호수 미수집)</span>
+              <span className="text-[10px] text-slate-400 font-semibold">(동/호수 수집 제외)</span>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus-within:border-emerald-500">
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="bg-transparent border-none outline-none text-white w-full"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsAddressSearching(!isAddressSearching)}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-extrabold text-[11px] border border-emerald-500/40 shrink-0 hover:bg-emerald-500/30"
-                >
-                  Google 검색
-                </button>
-              </div>
-
-              {isAddressSearching && (
-                <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                  {MOCK_GOOGLE_ADDRESSES.map((addr, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setAddress(addr);
-                        setIsAddressSearching(false);
-                      }}
-                      className="w-full text-left p-2 rounded-lg hover:bg-slate-900 text-[11px] text-slate-200 truncate transition"
-                    >
-                      ✓ {addr}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <GoogleAddressPicker
+              value={address}
+              onChange={(newAddr) => setAddress(newAddr)}
+              placeholder="Google Maps 도로명 위치 검색..."
+            />
           </div>
 
           {/* Business Reg Number (Optional) */}

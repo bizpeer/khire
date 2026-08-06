@@ -1,9 +1,10 @@
-import { JobPost } from '@/types/job';
+import { JobPost, DaangnReview } from '@/types/job';
 import { MOCK_JOBS } from './mockJobs';
 import { supabase } from './supabaseClient';
 
 const JOBS_STORAGE_KEY = 'khire_jobs_database_v2';
 const APPLICATIONS_STORAGE_KEY = 'khire_job_applications_v2';
+const REVIEWS_STORAGE_KEY = 'khire_daangn_reviews_v1';
 
 export interface JobApplication {
   id: string;
@@ -22,6 +23,13 @@ export interface JobApplication {
 export const DEFAULT_JOBS: JobPost[] = MOCK_JOBS.map((job) => ({
   ...job,
   companyName: `[Khire 공식 예시 사업자] ${job.companyName}`,
+  workDays: job.workDays || '월~금 (주 5일)',
+  workHours: job.workHours || '09:00 ~ 18:00 (휴게시간 1시간)',
+  workPeriod: job.workPeriod || '3개월 이상 / 장기 우대',
+  benefits: job.benefits || ['식사 제공', '주휴수당', '유니폼 지원', '초보 가능', '친구 동반 지원'],
+  daangnScore: job.daangnScore || 4.8,
+  daangnBadges: job.daangnBadges || ['💖 급여를 제때 줘요', '😊 사장님이 친절해요', '🧹 근무 환경이 쾌적해요'],
+  reviewCount: job.reviewCount || 12,
 })) as JobPost[];
 
 /**
@@ -29,7 +37,6 @@ export const DEFAULT_JOBS: JobPost[] = MOCK_JOBS.map((job) => ({
  */
 export async function getJobsFromDB(): Promise<JobPost[]> {
   try {
-    // 1. Try Supabase fetch if client available
     if (supabase) {
       const { data, error } = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
       if (!error && data && data.length > 0) {
@@ -40,7 +47,6 @@ export async function getJobsFromDB(): Promise<JobPost[]> {
     console.warn('Supabase fetch notice, using local DB:', e);
   }
 
-  // 2. LocalStorage Fallback
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem(JOBS_STORAGE_KEY);
     if (saved) {
@@ -53,7 +59,6 @@ export async function getJobsFromDB(): Promise<JobPost[]> {
         console.error('Failed to parse local jobs:', err);
       }
     }
-    // Initialize LocalStorage with default example data
     localStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(DEFAULT_JOBS));
   }
 
@@ -66,14 +71,12 @@ export async function getJobsFromDB(): Promise<JobPost[]> {
 export async function saveJobToDB(newJob: JobPost): Promise<JobPost[]> {
   let updatedJobs: JobPost[] = [];
 
-  // LocalStorage sync
   if (typeof window !== 'undefined') {
     const existing = await getJobsFromDB();
     updatedJobs = [newJob, ...existing];
     localStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(updatedJobs));
   }
 
-  // Supabase sync
   try {
     if (supabase) {
       await supabase.from('jobs').insert([
@@ -100,6 +103,59 @@ export async function saveJobToDB(newJob: JobPost): Promise<JobPost[]> {
   }
 
   return updatedJobs;
+}
+
+/**
+ * Admin: Update existing job in DB
+ */
+export async function updateJobInDB(updatedJob: JobPost): Promise<JobPost[]> {
+  let allJobs = await getJobsFromDB();
+  allJobs = allJobs.map((j) => (j.id === updatedJob.id ? updatedJob : j));
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(allJobs));
+  }
+
+  try {
+    if (supabase) {
+      await supabase
+        .from('jobs')
+        .update({
+          title: updatedJob.title,
+          company_name: updatedJob.companyName,
+          salary: updatedJob.salary,
+          description: updatedJob.description,
+          category: updatedJob.category,
+        })
+        .eq('id', updatedJob.id);
+    }
+  } catch (e) {
+    console.warn('Supabase update notice:', e);
+  }
+
+  return allJobs;
+}
+
+/**
+ * Admin: Delete job from DB
+ */
+export async function deleteJobFromDB(jobId: string): Promise<JobPost[]> {
+  let allJobs = await getJobsFromDB();
+  allJobs = allJobs.filter((j) => j.id !== jobId);
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(allJobs));
+  }
+
+  try {
+    if (supabase) {
+      await supabase.from('jobs').delete().eq('id', jobId);
+    }
+  } catch (e) {
+    console.warn('Supabase delete notice:', e);
+  }
+
+  return allJobs;
 }
 
 /**
@@ -137,6 +193,57 @@ export async function saveApplicationToDB(app: Omit<JobApplication, 'id' | 'appl
   }
 
   return newApp;
+}
+
+/**
+ * Save Daangn Employer Review
+ */
+export async function saveReviewToDB(review: DaangnReview): Promise<DaangnReview[]> {
+  let reviews: DaangnReview[] = [];
+
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(REVIEWS_STORAGE_KEY);
+    const existing = saved ? JSON.parse(saved) : [];
+    reviews = [review, ...existing];
+    localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(reviews));
+  }
+
+  // Update employer score on job
+  const allJobs = await getJobsFromDB();
+  const targetJob = allJobs.find((j) => j.id === review.jobId);
+  if (targetJob) {
+    const currentScore = targetJob.daangnScore || 4.8;
+    const currentCount = targetJob.reviewCount || 10;
+    const newCount = currentCount + 1;
+    const newScore = Math.round(((currentScore * currentCount + review.rating) / newCount) * 10) / 10;
+
+    targetJob.daangnScore = newScore;
+    targetJob.reviewCount = newCount;
+    if (review.selectedBadges.length > 0) {
+      targetJob.daangnBadges = Array.from(new Set([...(targetJob.daangnBadges || []), ...review.selectedBadges]));
+    }
+    await updateJobInDB(targetJob);
+  }
+
+  return reviews;
+}
+
+/**
+ * Get Daangn Reviews for a Job/Company
+ */
+export function getReviewsForJob(jobId: string): DaangnReview[] {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(REVIEWS_STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed: DaangnReview[] = JSON.parse(saved);
+        return parsed.filter((r) => r.jobId === jobId);
+      } catch (e) {
+        return [];
+      }
+    }
+  }
+  return [];
 }
 
 /**

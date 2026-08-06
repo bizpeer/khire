@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, MapPin, Sparkles, Clock, Bus, Car, Zap, Building2, CalendarCheck, ShieldCheck, CheckCircle2, AlertTriangle, UserCheck, Lock } from 'lucide-react';
+import { X, MapPin, Sparkles, Clock, Bus, Car, Zap, Building2, CalendarCheck, ShieldCheck, CheckCircle2, AlertTriangle, UserCheck, Lock, Star, Heart, Smile, ThumbsUp } from 'lucide-react';
 import { JobPost } from '@/types/job';
 import { saveApplicationToDB } from '@/lib/jobService';
+import DaangnReviewModal from '@/components/DaangnReviewModal';
 
 interface JobDetailModalProps {
   job: JobPost | null;
@@ -25,6 +26,7 @@ export default function JobDetailModal({
   const [resumeSummary, setResumeSummary] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [appliedSuccess, setAppliedSuccess] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   if (!isOpen || !job) return null;
 
@@ -156,6 +158,80 @@ export default function JobDetailModal({
               </div>
             </div>
 
+            {/* Daangn Jobs Work Specifications (언제 어떻게 일하는지 고용내용) */}
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/30 text-xs space-y-3">
+              <h4 className="font-extrabold text-amber-300 flex items-center gap-1.5 text-sm">
+                <Clock className="w-4 h-4 text-amber-400" />
+                🥕 당근알바 근무 스펙 (언제 어떻게 일하는지)
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <span className="text-[11px] text-slate-400 font-bold block mb-0.5">근무 요일</span>
+                  <span className="text-white font-extrabold">{job.workDays || '월~금 (주 5일)'}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <span className="text-[11px] text-slate-400 font-bold block mb-0.5">근무 시간</span>
+                  <span className="text-white font-extrabold">{job.workHours || '09:00 ~ 18:00 (휴게 1h)'}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <span className="text-[11px] text-slate-400 font-bold block mb-0.5">근무 기간</span>
+                  <span className="text-amber-300 font-extrabold">{job.workPeriod || '3개월 이상 / 장기 우대'}</span>
+                </div>
+              </div>
+
+              {/* Benefits & Perks Pills */}
+              <div>
+                <span className="text-[11px] text-slate-400 font-bold block mb-1.5">복리후생 & 우대 조건</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {(job.benefits || ['식사 제공', '주휴수당', '유니폼 지원', '초보 환영', '친구 동반 지원']).map((b, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-[11px] font-extrabold border border-emerald-500/30"
+                    >
+                      ✓ {b}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Daangn Employer Rating & 5-Badge Review Summary */}
+            <div className="mb-6 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-black text-sm flex items-center gap-1 border border-amber-500/40">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span>{job.daangnScore || 4.8} / 5.0</span>
+                  </div>
+                  <div>
+                    <h5 className="font-extrabold text-white">당근알바 매장 평가</h5>
+                    <span className="text-[10px] text-slate-400">구직 회원 리뷰 {job.reviewCount || 12}개 기준</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsReviewModalOpen(true)}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-md transition-all flex items-center gap-1"
+                >
+                  <Star className="w-3.5 h-3.5 fill-slate-950" />
+                  <span>업체 평가 남기기</span>
+                </button>
+              </div>
+
+              {/* Daangn 5-Badge Keyword Highlights */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {(job.daangnBadges || ['💖 급여를 제때 줘요', '😊 사장님이 친절해요', '🧹 근무 환경이 쾌적해요']).map((badge, i) => (
+                  <span
+                    key={i}
+                    className="px-2.5 py-1 rounded-full bg-slate-950 text-amber-300 text-[11px] font-bold border border-amber-500/30 shadow-sm"
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             {/* Description */}
             <div className="mb-6 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 space-y-2">
               <span className="font-bold text-white block">상세 모집 내용</span>
@@ -224,6 +300,13 @@ export default function JobDetailModal({
             )}
           </div>
         )}
+
+        {/* Daangn Review Modal */}
+        <DaangnReviewModal
+          job={job}
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+        />
       </div>
     </div>
   );

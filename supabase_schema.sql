@@ -272,8 +272,35 @@ DROP POLICY IF EXISTS "Public Read Companies" ON public.companies;
 CREATE POLICY "Public Read Companies" ON public.companies
     FOR SELECT USING (true);
 
+-- Admin Full Access Policy for Security Hardening
+DROP POLICY IF EXISTS "Admin Full Access Jobs" ON public.jobs;
+CREATE POLICY "Admin Full Access Jobs" ON public.jobs
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN'
+        )
+    );
+
+-- 14. Daangn Employer Reviews Table
+CREATE TABLE IF NOT EXISTS public.company_reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    job_id UUID REFERENCES public.jobs(id) ON DELETE CASCADE,
+    company_name VARCHAR(255) NOT NULL,
+    reviewer_name VARCHAR(100) DEFAULT '당근 구직 회원',
+    rating NUMERIC(3, 1) NOT NULL DEFAULT 5.0,
+    selected_badges TEXT[], -- e.g. ARRAY['💖 급여를 제때 줘요', '😊 사장님이 친절해요']
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.company_reviews ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public Read Reviews" ON public.company_reviews;
+CREATE POLICY "Public Read Reviews" ON public.company_reviews FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Authenticated Insert Review" ON public.company_reviews;
+CREATE POLICY "Authenticated Insert Review" ON public.company_reviews FOR INSERT WITH CHECK (true);
+
 -- ====================================================================
--- 14. Initial Admin Account Seed Data
+-- 15. Initial Admin Account Seed Data
 -- ====================================================================
 INSERT INTO public.users (id, email, password_hash, role, auth_provider, name)
 VALUES (

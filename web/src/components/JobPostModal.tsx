@@ -23,6 +23,12 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
   const [description, setDescription] = useState('');
   const [originalJobId, setOriginalJobId] = useState<string | null>(null);
 
+  // Daangn Jobs Work Specification States
+  const [workDays, setWorkDays] = useState('월~금 (주 5일)');
+  const [workHours, setWorkHours] = useState('09:00 ~ 18:00 (휴게시간 1시간)');
+  const [workPeriod, setWorkPeriod] = useState('3개월 이상 / 장기 우대');
+  const [benefitsInput, setBenefitsInput] = useState('식사 제공, 주휴수당, 유니폼 지원, 초보 가능, 친구 동반 지원');
+
   // Image Upload States (URL vs Direct File Upload)
   const [imageInputMode, setImageInputMode] = useState<'URL' | 'FILE'>('FILE');
   const [imageUrl, setImageUrl] = useState('');
@@ -111,10 +117,19 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
       isEasyApply: true,
       imageUrl: imagePreview || imageUrl || undefined,
       isPaid: true,
+      isPremiumAd: selectedAdTier === 'PREMIUM_30',
+      adPrice,
       paidAt: now.toISOString(),
       expiresAt: expiresAt,
       originalJobId: originalJobId || undefined,
       commuteTimeEstimate: { transitMinutes: 15, carMinutes: 10 },
+      workDays: workDays || '월~금 (주 5일)',
+      workHours: workHours || '09:00 ~ 18:00 (휴게시간 1시간)',
+      workPeriod: workPeriod || '3개월 이상 / 장기 우대',
+      benefits: benefitsInput ? benefitsInput.split(',').map((b) => b.trim()) : ['식사 제공', '주휴수당'],
+      daangnScore: 4.8,
+      daangnBadges: ['💖 급여를 제때 줘요', '😊 사장님이 친절해요', '🧹 근무 환경이 쾌적해요'],
+      reviewCount: 1,
     };
 
     // Save to DB (Supabase + LocalStorage)

@@ -27,11 +27,30 @@ export interface JobPost {
   adPrice?: number; // e.g. 1.00 or 30.00
   paidAt?: string; // 결제 시각
   expiresAt?: string; // 결제 성공 시각부터 정확히 7일 후 만료 시각
-  originalJobId?: string; // 기존 공고 재활용/복사 시 원본 공고 ID
   commuteTimeEstimate?: {
     transitMinutes: number;
     carMinutes: number;
   };
+  // Daangn Jobs Work Specifications (언제 어떻게 일하는지 고용내용)
+  workDays?: string; // e.g. "월~금 (주 5일)"
+  workHours?: string; // e.g. "09:00 ~ 18:00 (휴게시간 1시간)"
+  workPeriod?: string; // e.g. "3개월 이상 / 장기 우대"
+  benefits?: string[]; // e.g. ["식사 제공", "주휴수당", "유니폼 지원", "초보 가능"]
+  // Daangn Jobs Employer Rating & 5-Badge System
+  daangnScore?: number; // e.g. 4.8 / 5.0
+  daangnBadges?: string[]; // e.g. ["급여를 제때 줘요", "사장님이 친절해요", "근무 환경이 쾌적해요"]
+  reviewCount?: number;
+}
+
+export interface DaangnReview {
+  id: string;
+  jobId: string;
+  companyName: string;
+  reviewerName: string;
+  rating: number; // 1.0 ~ 5.0
+  selectedBadges: string[];
+  comment: string;
+  createdTime: string;
 }
 
 export interface UserLocation {

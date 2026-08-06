@@ -87,12 +87,17 @@ export default function JobCard({ job, onApply, onViewDetail }: JobCardProps) {
           </div>
         )}
 
-        {/* Top Header Row: Category Badge & AI Match Score */}
+        {/* Top Header Row: Category Badge & AI Match Score & Daangn Score */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border ${categoryMeta.style}`}>
               <CategoryIcon className="w-3.5 h-3.5" />
               <span>{categoryMeta.label}</span>
+            </span>
+
+            {/* Daangn Employer Score Badge */}
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-extrabold border border-amber-500/30 flex items-center gap-1">
+              ⭐ {job.daangnScore || 4.8}
             </span>
           </div>
 

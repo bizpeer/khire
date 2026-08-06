@@ -2,14 +2,15 @@
 
 import React from 'react';
 import { JobPost } from '@/types/job';
-import { MapPin, Sparkles, Clock, Bus, Car, Zap, Building2, Utensils, Hotel, Truck, Cpu, CalendarCheck, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Sparkles, Clock, Bus, Car, Zap, Building2, Utensils, Hotel, Truck, Cpu, CalendarCheck, Image as ImageIcon, Eye } from 'lucide-react';
 
 interface JobCardProps {
   job: JobPost;
   onApply?: (job: JobPost) => void;
+  onViewDetail?: (job: JobPost) => void;
 }
 
-export default function JobCard({ job, onApply }: JobCardProps) {
+export default function JobCard({ job, onApply, onViewDetail }: JobCardProps) {
   const getCategoryBadge = () => {
     switch (job.category) {
       case 'F_AND_B':
@@ -65,9 +66,12 @@ export default function JobCard({ job, onApply }: JobCardProps) {
   const dayStatus = get7DayStatus();
 
   return (
-    <article className="glass-card rounded-3xl p-5 md:p-6 flex flex-col justify-between h-full relative group border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden">
+    <article
+      onClick={() => onViewDetail && onViewDetail(job)}
+      className="glass-card rounded-3xl p-5 md:p-6 flex flex-col justify-between h-full relative group border border-slate-800 hover:border-emerald-500/40 transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer"
+    >
       <div>
-        {/* Attached Job Image (if available) */}
+        {/* Attached Job Image (if available - either URL or uploaded file) */}
         {job.imageUrl && (
           <div className="relative w-full h-36 rounded-2xl overflow-hidden mb-4 border border-slate-800 shadow-inner group-hover:border-emerald-500/30 transition-colors">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -78,20 +82,17 @@ export default function JobCard({ job, onApply }: JobCardProps) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
             <span className="absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[10px] text-slate-200 font-medium flex items-center gap-1 border border-white/10">
-              <ImageIcon className="w-3 h-3 text-emerald-400" /> 매장/근무지 실물 이미지
+              <ImageIcon className="w-3 h-3 text-emerald-400" /> 공고 이미지 첨부됨
             </span>
           </div>
         )}
 
-        {/* Top Header Row: Category Badge & AI Match Score & Demo Badge */}
+        {/* Top Header Row: Category Badge & AI Match Score */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border ${categoryMeta.style}`}>
               <CategoryIcon className="w-3.5 h-3.5" />
               <span>{categoryMeta.label}</span>
-            </span>
-            <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[10px] font-semibold border border-slate-700">
-              [예시 공고]
             </span>
           </div>
 
@@ -172,7 +173,7 @@ export default function JobCard({ job, onApply }: JobCardProps) {
         )}
       </div>
 
-      {/* Footer: Salary & Action Button */}
+      {/* Footer: Salary & Action Buttons */}
       <div className="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
         <div>
           <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
@@ -183,17 +184,31 @@ export default function JobCard({ job, onApply }: JobCardProps) {
           </span>
         </div>
 
-        <button
-          onClick={() => onApply && onApply(job)}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all ${
-            job.isEasyApply
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 font-extrabold'
-              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-          }`}
-        >
-          {job.isEasyApply && <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />}
-          <span>{job.isEasyApply ? '즉시 지원 (Easy Apply)' : '상세보기'}</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onViewDetail) onViewDetail(job);
+            }}
+            className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>읽기</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onApply) onApply(job);
+            }}
+            className="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20"
+          >
+            <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+            <span>지원하기</span>
+          </button>
+        </div>
       </div>
     </article>
   );

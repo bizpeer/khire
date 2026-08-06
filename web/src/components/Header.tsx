@@ -12,6 +12,9 @@ interface HeaderProps {
   onOpenResume?: () => void;
   onOpenJobPost?: () => void;
   onOpenAdmin?: () => void;
+  isLoggedIn?: boolean;
+  userEmail?: string;
+  onLogout?: () => void;
 }
 
 export default function Header({
@@ -21,6 +24,9 @@ export default function Header({
   onOpenResume,
   onOpenJobPost,
   onOpenAdmin,
+  isLoggedIn = false,
+  userEmail,
+  onLogout,
 }: HeaderProps) {
   const t = DICTIONARY[language];
 
@@ -110,12 +116,28 @@ export default function Header({
             <span>{t.navPostJob}</span>
           </button>
 
-          <button
-            onClick={onOpenAuth}
-            className="flex items-center gap-2 text-xs font-extrabold px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 transition-all"
-          >
-            {t.navAuth}
-          </button>
+          {isLoggedIn ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-300 px-3 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-800">
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{userEmail || '로그인 회원'}</span>
+              </span>
+              <button
+                onClick={onLogout}
+                className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              className="flex items-center gap-2 text-xs font-extrabold px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 transition-all"
+            >
+              <User className="w-3.5 h-3.5 text-slate-950" />
+              <span>로그인 / 회원가입</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

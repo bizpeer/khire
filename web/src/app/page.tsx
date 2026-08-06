@@ -9,19 +9,27 @@ import NewsTicker from '@/components/NewsTicker';
 import AuthModal from '@/components/AuthModal';
 import ResumeModal from '@/components/ResumeModal';
 import JobPostModal from '@/components/JobPostModal';
-import AdminDashboardModal from '@/components/AdminDashboardModal';
-import {
-  MOCK_JOBS,
-  calculateHaversineDistance,
-} from '@/lib/mockJobs';
+import JobDetailModal from '@/components/JobDetailModal';
+import { getJobsFromDB } from '@/lib/jobService';
+import { MOCK_JOBS, calculateHaversineDistance } from '@/lib/mockJobs';
 import { detectUserLocation } from '@/lib/geoIp';
 import { RadiusOption, JobPost, UserLocation, JobCategory } from '@/types/job';
 import { Language, DICTIONARY } from '@/lib/i18n';
-import { Sparkles, Map, List, Search, Globe2, Utensils, Hotel, Truck, Cpu, Navigation, CheckCircle2 } from 'lucide-react';
+import FbmShowcase from '@/components/FbmShowcase';
+import { Sparkles, Map, List, Search, Globe2, Utensils, Hotel, Truck, Cpu, Navigation, CheckCircle2, Lock, UserCheck } from 'lucide-react';
 
 export default function HomePage() {
+  const [activeApp, setActiveApp] = useState<'FBM_SHOWCASE' | 'KHIRE_RECRUITMENT'>('FBM_SHOWCASE');
   const [language, setLanguage] = useState<Language>('KO');
   const t = DICTIONARY[language];
+
+  // Auth State (Non-logged in by default as per prompt)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [userProfile, setUserProfile] = useState<{ email: string; name: string } | null>(null);
+
+  // Dynamic Jobs State from DB
+  const [rawJobs, setRawJobs] = useState<JobPost[]>(MOCK_JOBS as JobPost[]);
+  const [selectedDetailJob, setSelectedDetailJob] = useState<JobPost | null>(null);
 
   const [userLocation, setUserLocation] = useState<UserLocation>({
     address: '미국 캘리포니아 로스앤젤레스 한인타운 (LA Koreatown)',
@@ -36,13 +44,24 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<JobCategory>('ALL');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [viewMode, setViewMode] = useState<'LIST' | 'MAP'>('LIST');
-  const [appliedJob, setAppliedJob] = useState<JobPost | null>(null);
 
   // Modals state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isResumeOpen, setIsResumeOpen] = useState(false);
   const [isJobPostOpen, setIsJobPostOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+  // Load jobs from DB / LocalStorage on mount
+  const refreshJobs = async () => {
+    const loaded = await getJobsFromDB();
+    if (loaded && loaded.length > 0) {
+      setRawJobs(loaded);
+    }
+  };
+
+  useEffect(() => {
+    refreshJobs();
+  }, []);
 
   // Detect IP & GPS location automatically. Fallback to LA Koreatown if permission denied.
   useEffect(() => {
@@ -56,9 +75,17 @@ export default function HomePage() {
     setLanguage((prev) => (prev === 'KO' ? 'EN' : 'KO'));
   };
 
-  // Calculate distance for all mock jobs relative to user's location
+  // Login handler
+  const handleLoginSuccess = (email: string) => {
+    setIsLoggedIn(true);
+    setUserProfile({ email, name: email.split('@')[0] });
+    setIsAuthOpen(false);
+    alert(`로그인 성공! (${email})\nKHIRE 모든 기능 및 지원하기 권한이 활성화되었습니다.`);
+  };
+
+  // Calculate distance for all jobs relative to user's location
   const jobsWithDistance = useMemo(() => {
-    return MOCK_JOBS.map((job) => {
+    return rawJobs.map((job) => {
       const distanceKm = calculateHaversineDistance(
         userLocation.latitude,
         userLocation.longitude,
@@ -70,7 +97,7 @@ export default function HomePage() {
         distanceKm,
       } as JobPost;
     });
-  }, [userLocation]);
+  }, [rawJobs, userLocation]);
 
   // Filter jobs based on radius option, category, and search keyword
   const filteredJobs = useMemo(() => {
@@ -99,9 +126,24 @@ export default function HomePage() {
       .sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
   }, [jobsWithDistance, selectedRadius, selectedCategory, searchKeyword]);
 
+  // Handle Apply button click: Non-logged in restriction check
   const handleApply = (job: JobPost) => {
-    setAppliedJob(job);
+    if (!isLoggedIn) {
+      alert('비로그인 회원 상태입니다.\n\n공고 내용은 자유롭게 읽을 수 있지만, 입사 지원은 회원 전용 서비스입니다.\n로그인 및 회원가입 화면으로 이동합니다.');
+      setSelectedDetailJob(job);
+      setIsAuthOpen(true);
+      return;
+    }
+    setSelectedDetailJob(job);
   };
+
+  const handleViewDetail = (job: JobPost) => {
+    setSelectedDetailJob(job);
+  };
+
+  if (activeApp === 'FBM_SHOWCASE') {
+    return <FbmShowcase onSwitchToKhire={() => setActiveApp('KHIRE_RECRUITMENT')} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#070a12] text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-slate-950 font-sans">
@@ -112,6 +154,13 @@ export default function HomePage() {
         onOpenResume={() => setIsResumeOpen(true)}
         onOpenJobPost={() => setIsJobPostOpen(true)}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        isLoggedIn={isLoggedIn}
+        userEmail={userProfile?.email}
+        onLogout={() => {
+          setIsLoggedIn(false);
+          setUserProfile(null);
+          alert('로그아웃되었습니다. 비로그인 회원 상태로 전환됩니다.');
+        }}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
@@ -284,48 +333,37 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job) => (
-                <JobCard key={job.id} job={job} onApply={handleApply} />
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  onApply={handleApply}
+                  onViewDetail={handleViewDetail}
+                />
               ))}
             </div>
           )}
         </section>
       </main>
 
-      {/* Easy Apply Success Modal */}
-      {appliedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="glass-panel p-6 md:p-8 rounded-3xl max-w-md w-full border border-emerald-500/40 shadow-2xl relative">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-            </div>
-            <h3 className="text-xl font-extrabold text-white text-center mb-2">
-              {t.appliedSuccessTitle}
-            </h3>
-            <p className="text-xs text-slate-300 text-center mb-6 leading-relaxed">
-              <strong className="text-emerald-300 font-bold">{appliedJob.companyName}</strong>의 <br />
-              &quot;{appliedJob.title}&quot; 공고에 회원님의 AI 이력서가 성공적으로 전달되었습니다.
-            </p>
-
-            <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-400 mb-6 flex justify-between items-center">
-              <span>업체 주소:</span>
-              <span className="text-emerald-300 font-bold truncate max-w-[200px]">{appliedJob.locationName}</span>
-            </div>
-
-            <button
-              onClick={() => setAppliedJob(null)}
-              className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/30 transition-all"
-            >
-              {t.confirmBtn}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Interactive Feature Modals */}
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onLoginSuccess={(email) => handleLoginSuccess(email)}
+      />
       <ResumeModal isOpen={isResumeOpen} onClose={() => setIsResumeOpen(false)} />
-      <JobPostModal isOpen={isJobPostOpen} onClose={() => setIsJobPostOpen(false)} />
-      <AdminDashboardModal isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      <JobPostModal
+        isOpen={isJobPostOpen}
+        onClose={() => setIsJobPostOpen(false)}
+        onJobCreated={() => refreshJobs()}
+      />
+      <JobDetailModal
+        job={selectedDetailJob}
+        isOpen={!!selectedDetailJob}
+        onClose={() => setSelectedDetailJob(null)}
+        isLoggedIn={isLoggedIn}
+        onOpenAuth={() => setIsAuthOpen(true)}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-8 bg-slate-950 text-center text-xs text-slate-500">

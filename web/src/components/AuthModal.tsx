@@ -6,9 +6,10 @@ import { X, Lock, Mail, Shield, Building, UserCheck } from 'lucide-react';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onLoginSuccess?: (email: string) => void;
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
   const [role, setRole] = useState<'APPLICANT' | 'EMPLOYER'>('APPLICANT');
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -18,12 +19,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(
-      `${role === 'APPLICANT' ? '개인회원' : '기업회원'} ${
-        isLogin ? '로그인' : '회원가입'
-      } 성공! (JWT Access & Refresh Token 발급)`
-    );
-    onClose();
+    const userEmail = email || 'applicant@khire.net';
+    if (onLoginSuccess) {
+      onLoginSuccess(userEmail);
+    } else {
+      alert(
+        `${role === 'APPLICANT' ? '개인회원' : '기업회원'} ${
+          isLogin ? '로그인' : '회원가입'
+        } 성공! (JWT Access & Refresh Token 발급)`
+      );
+      onClose();
+    }
   };
 
   return (

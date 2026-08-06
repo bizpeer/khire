@@ -12,6 +12,7 @@ import JobDetailModal from '@/components/JobDetailModal';
 import PremiumAdRotationTicker from '@/components/PremiumAdRotationTicker';
 import UserProfileModal from '@/components/UserProfileModal';
 import { getJobsFromDB } from '@/lib/jobService';
+import UserDashboardModal, { UserApplication } from '@/components/UserDashboardModal';
 import { MOCK_JOBS, calculateHaversineDistance } from '@/lib/mockJobs';
 import { detectUserLocation } from '@/lib/geoIp';
 import { RadiusOption, JobPost, UserLocation, JobCategory } from '@/types/job';
@@ -30,6 +31,26 @@ export default function HomePage() {
 
   // Track applied jobs for rating permissions
   const [userAppliedJobIds, setUserAppliedJobIds] = useState<string[]>([]);
+  const [myApplications, setMyApplications] = useState<UserApplication[]>([
+    {
+      id: 'app-1',
+      jobId: 'job-au-tile-1',
+      jobTitle: '시드니 스트라스필드 현장 타일공 및 타일 구인',
+      companyName: '시드니 K-Tile Construction',
+      appliedResumeTitle: '이력서 2: 시드니 상업용 청소 및 타일 현장 기술 이력서',
+      appliedAt: '2026-08-06 14:15',
+      status: 'PENDING',
+    },
+    {
+      id: 'app-2',
+      jobId: 'job-au-clean-1',
+      jobTitle: '시드니 CBD 상업용 오피스 청소 알바',
+      companyName: 'CleanSydney Pro Services',
+      appliedResumeTitle: '이력서 2: 시드니 상업용 청소 및 타일 현장 기술 이력서',
+      appliedAt: '2026-08-06 12:00',
+      status: 'ACCEPTED',
+    },
+  ]);
 
   // Dynamic Jobs State from DB
   const [rawJobs, setRawJobs] = useState<JobPost[]>(MOCK_JOBS as JobPost[]);
@@ -53,8 +74,8 @@ export default function HomePage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isResumeOpen, setIsResumeOpen] = useState(false);
   const [isJobPostOpen, setIsJobPostOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isUserDashboardOpen, setIsUserDashboardOpen] = useState(false);
 
   // Load jobs from DB / LocalStorage on mount
   const refreshJobs = async () => {
@@ -176,8 +197,8 @@ export default function HomePage() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenResume={handleOpenResume}
         onOpenJobPost={handleOpenJobPost}
-        onOpenAdmin={() => setIsAdminOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenUserDashboard={() => setIsUserDashboardOpen(true)}
         isLoggedIn={isLoggedIn}
         userEmail={userProfile?.email}
         onLogout={() => {
@@ -383,6 +404,28 @@ export default function HomePage() {
         onModeSwitch={(newMode) => {
           setUserMode(newMode);
           alert(`이용 모드가 [${newMode === 'APPLICANT' ? '개인 구직 지원자 모드' : '기업 고용주 모드'}]로 전환되었습니다.`);
+        }}
+      />
+      <UserDashboardModal
+        isOpen={isUserDashboardOpen}
+        onClose={() => setIsUserDashboardOpen(false)}
+        userEmail={userProfile?.email || 'applicant@khire.net'}
+        userName={userProfile?.name || 'KHIRE 회원'}
+        onOpenResumeModal={() => {
+          setIsUserDashboardOpen(false);
+          setIsResumeOpen(true);
+        }}
+        myApplications={myApplications}
+        onCancelApplication={(appId) => {
+          setMyApplications((prev) => prev.filter((a) => a.id !== appId));
+          alert('해당 입사 지원이 성공적으로 취소되었습니다.');
+        }}
+        myJobs={rawJobs}
+        onDeleteMyJob={(jobId) => {
+          if (confirm('해당 구인 공고를 삭제하시겠습니까?')) {
+            setRawJobs((prev) => prev.filter((j) => j.id !== jobId));
+            alert('구인 공고가 삭제되었습니다.');
+          }
         }}
       />
 

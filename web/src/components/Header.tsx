@@ -11,8 +11,8 @@ interface HeaderProps {
   onOpenAuth?: () => void;
   onOpenResume?: () => void;
   onOpenJobPost?: () => void;
-  onOpenAdmin?: () => void;
   onOpenProfile?: () => void;
+  onOpenUserDashboard?: () => void;
   isLoggedIn?: boolean;
   userEmail?: string;
   onLogout?: () => void;
@@ -24,8 +24,8 @@ export default function Header({
   onOpenAuth,
   onOpenResume,
   onOpenJobPost,
-  onOpenAdmin,
   onOpenProfile,
+  onOpenUserDashboard,
   isLoggedIn = false,
   userEmail,
   onLogout,
@@ -71,13 +71,6 @@ export default function Header({
             <Sparkles className="w-4 h-4 text-indigo-400" />
             <span>{t.navAiMatch}</span>
           </Link>
-          <button
-            onClick={onOpenAdmin}
-            className="hover:text-purple-300 transition-colors text-slate-300 flex items-center gap-1 text-xs px-3 py-1 rounded-xl bg-purple-950/50 border border-purple-800/60 font-bold"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-            <span>{t.navAdmin}</span>
-          </button>
         </nav>
 
         {/* Right Action Items */}
@@ -121,8 +114,16 @@ export default function Header({
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
               <button
+                onClick={onOpenUserDashboard}
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-extrabold text-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md transition"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-300" />
+                <span>마이 대시보드</span>
+              </button>
+
+              <button
                 onClick={onOpenProfile}
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-300 px-3 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800 transition cursor-pointer"
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-300 px-3 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800 transition cursor-pointer"
               >
                 <User className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{userEmail || '로그인 회원'}</span>

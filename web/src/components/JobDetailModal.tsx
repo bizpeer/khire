@@ -278,7 +278,23 @@ export default function JobDetailModal({
             {/* Inline Application Form for Logged in User */}
             {isApplying ? (
               <form onSubmit={handleSubmitApplication} className="space-y-3 pt-2 border-t border-slate-800">
-                <h4 className="font-bold text-white text-xs">즉시 지원 정보 입력</h4>
+                <h4 className="font-extrabold text-white text-xs flex items-center justify-between">
+                  <span>즉시 지원 및 이력서 선택</span>
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                    최대 2개 이력서 보유 중
+                  </span>
+                </h4>
+
+                <div>
+                  <label className="block text-[11px] text-slate-300 font-bold mb-1">제출할 이력서 선택 *</label>
+                  <select
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs font-bold outline-none focus:border-emerald-500"
+                  >
+                    <option value="res-1">이력서 1: 호주/시드니 F&B 한식 BBQ 조리장 및 바리스타 경력 이력서 (F&B)</option>
+                    <option value="res-2">이력서 2: 시드니 상업용 청소 및 타일 현장 기술 이력서 (숙박 & 청소 / 물류)</option>
+                  </select>
+                </div>
+
                 <input
                   type="text"
                   required
@@ -290,7 +306,7 @@ export default function JobDetailModal({
                 <input
                   type="text"
                   required
-                  placeholder="연락처 또는 이메일 (예: 010-1234-5678)"
+                  placeholder="연락처 또는 이메일 (예: +61 412-345-678)"
                   value={applicantContact}
                   onChange={(e) => setApplicantContact(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs outline-none focus:border-emerald-500"

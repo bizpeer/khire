@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { X, Lock, Mail, User, Phone, MapPin, Building2, CheckCircle2, Globe, Search, ExternalLink, ShieldCheck } from 'lucide-react';
 import TermsModal from '@/components/TermsModal';
 import GoogleAddressPicker from '@/components/GoogleAddressPicker';
+import { detectUserLocation } from '@/lib/geoIp';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -33,7 +34,16 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [mobileNumber, setMobileNumber] = useState('');
 
   // Google Maps Address Selection (No Apt / Room details collected)
-  const [address, setAddress] = useState('Strathfield Plaza, Strathfield NSW 2135 (호주 시드니 스트라스필드)');
+  const [address, setAddress] = useState('');
+
+  // Fetch IP-based location automatically
+  React.useEffect(() => {
+    if (isOpen && !isLogin && !address) {
+      detectUserLocation().then(loc => {
+        setAddress(loc.address);
+      });
+    }
+  }, [isOpen, isLogin, address]);
 
   // Business Reg Number (Optional)
   const [bizRegNumber, setBizRegNumber] = useState('');

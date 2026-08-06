@@ -22,6 +22,7 @@ export interface JobPost {
   description: string;
   isEasyApply: boolean;
   imageUrl?: string; // 공고 이미지 첨부 URL
+  authorEmail?: string; // 공고 작성자 이메일 (예: jwmaxum@gmail.com)
   isPaid?: boolean; // $1.00 USD 결제 여부
   isPremiumAd?: boolean; // $30.00 USD 상단 5초 로테이션 광고 여부
   adPrice?: number; // e.g. 1.00 or 30.00

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, MapPin, Building2, ShieldCheck, CheckCircle2, RefreshCw } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Building2, ShieldCheck, CheckCircle2, RefreshCw, Globe, Search } from 'lucide-react';
+import { COUNTRY_CODES, MOCK_GOOGLE_ADDRESSES } from './AuthModal';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -20,8 +21,11 @@ export default function UserProfileModal({
   currentMode,
   onModeSwitch,
 }: UserProfileModalProps) {
-  const [phone, setPhone] = useState('010-1234-5678');
-  const [address, setAddress] = useState('미국 캘리포니아 로스앤젤레스 한인타운');
+  const [name, setName] = useState(userName || '홍길동');
+  const [countryCode, setCountryCode] = useState('+1');
+  const [phoneNum, setPhoneNum] = useState('213-123-4567');
+  const [address, setAddress] = useState('미국 캘리포니아 로스앤젤레스 윌셔 Blvd (LA Koreatown)');
+  const [isAddressSearching, setIsAddressSearching] = useState(false);
   const [bizRegNumber, setBizRegNumber] = useState('123-45-67890');
   const [isSaved, setIsSaved] = useState(false);
 
@@ -37,8 +41,8 @@ export default function UserProfileModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="glass-panel p-6 md:p-8 rounded-3xl max-w-md w-full border border-emerald-500/40 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="glass-panel p-6 md:p-8 rounded-3xl max-w-md w-full border border-emerald-500/40 shadow-2xl relative my-8">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-900 border border-slate-800 transition-colors"
@@ -48,13 +52,13 @@ export default function UserProfileModal({
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xl">
-            {userName ? userName.charAt(0).toUpperCase() : 'U'}
+            {name ? name.charAt(0).toUpperCase() : 'U'}
           </div>
           <div>
             <h3 className="text-xl font-extrabold text-white flex items-center gap-2">
-              <span>{userName || 'KHIRE 회원'} 님</span>
+              <span>{name} 님</span>
             </h3>
-            <p className="text-xs text-slate-400">{userEmail}</p>
+            <p className="text-xs text-slate-400">이메일 ID: {userEmail}</p>
           </div>
         </div>
 
@@ -63,7 +67,7 @@ export default function UserProfileModal({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
               <RefreshCw className="w-4 h-4 text-emerald-400" />
-              회원 이용 모드 변경
+              회원 이용 모드 스위칭
             </span>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-[11px] border border-emerald-500/30">
               {currentMode === 'APPLICANT' ? '개인 구직자 모드' : '기업 고용주 모드'}
@@ -101,32 +105,97 @@ export default function UserProfileModal({
         <form onSubmit={handleSave} className="space-y-4 text-xs">
           <h4 className="font-extrabold text-white text-sm">회원 정보 수정</h4>
 
+          {/* Name */}
           <div>
-            <label className="text-slate-300 font-bold block mb-1">전화번호</label>
+            <label className="text-slate-300 font-bold block mb-1">성명 (이름)</label>
             <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus-within:border-emerald-500">
-              <Phone className="w-4 h-4 text-slate-400" />
+              <User className="w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="bg-transparent border-none outline-none text-white w-full"
               />
             </div>
           </div>
 
+          {/* Phone with Country Code */}
           <div>
-            <label className="text-slate-300 font-bold block mb-1">주소 (소재지)</label>
-            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus-within:border-emerald-500">
-              <MapPin className="w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="bg-transparent border-none outline-none text-white w-full"
-              />
+            <label className="text-slate-300 font-bold block mb-1">
+              휴대폰 번호 (+국가번호 선택)
+            </label>
+            <div className="flex items-center gap-2">
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="w-32 px-2.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-bold outline-none focus:border-emerald-500 shrink-0"
+              >
+                {COUNTRY_CODES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.code}
+                  </option>
+                ))}
+              </select>
+              <div className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus-within:border-emerald-500">
+                <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={phoneNum}
+                  onChange={(e) => setPhoneNum(e.target.value)}
+                  className="bg-transparent border-none outline-none text-white w-full"
+                />
+              </div>
             </div>
           </div>
 
+          {/* Google Maps Address (No Apt/Unit) */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-slate-300 font-bold flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                <span>주소지 (Google Maps 도로명 연동)</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-semibold">(동/호수 미수집)</span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus-within:border-emerald-500">
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="bg-transparent border-none outline-none text-white w-full"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsAddressSearching(!isAddressSearching)}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-extrabold text-[11px] border border-emerald-500/40 shrink-0 hover:bg-emerald-500/30"
+                >
+                  Google 검색
+                </button>
+              </div>
+
+              {isAddressSearching && (
+                <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                  {MOCK_GOOGLE_ADDRESSES.map((addr, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setAddress(addr);
+                        setIsAddressSearching(false);
+                      }}
+                      className="w-full text-left p-2 rounded-lg hover:bg-slate-900 text-[11px] text-slate-200 truncate transition"
+                    >
+                      ✓ {addr}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Business Reg Number (Optional) */}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-slate-300 font-bold">사업자등록번호</label>

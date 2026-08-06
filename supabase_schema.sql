@@ -34,11 +34,14 @@ END $$;
 -- 3. Users Table
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE, -- 회원 로그인 ID 겸용
+    name VARCHAR(100) NOT NULL, -- 회원 성명(이름)
+    phone VARCHAR(50), -- +국가번호 모바일 전화번호 (예: +1 213-123-4567)
+    address VARCHAR(255), -- 구글지도 연동 도로명 주소지 (상세 동호수 미수집)
+    biz_reg_number VARCHAR(100), -- 사업자등록번호 (선택사항 / Optional)
     password_hash VARCHAR(255),
     role role_enum NOT NULL DEFAULT 'APPLICANT',
     auth_provider auth_provider_enum NOT NULL DEFAULT 'LOCAL',
-    name VARCHAR(100),
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
     location_geom GEOGRAPHY(Point, 4326),

@@ -15,11 +15,11 @@ import { MOCK_JOBS, calculateHaversineDistance } from '@/lib/mockJobs';
 import { detectUserLocation } from '@/lib/geoIp';
 import { RadiusOption, JobPost, UserLocation, JobCategory } from '@/types/job';
 import { Language, DICTIONARY } from '@/lib/i18n';
-import FbmShowcase from '@/components/FbmShowcase';
-import { Sparkles, Map, List, Search, Globe2, Utensils, Hotel, Truck, Cpu, Navigation, CheckCircle2, Lock, UserCheck } from 'lucide-react';
+import KhireWorkplaceViewer from '@/components/KhireWorkplaceViewer';
+import { Sparkles, Map, List, Search, Globe2, Utensils, Hotel, Truck, Cpu, Navigation, CheckCircle2, Lock, UserCheck, Eye, ShieldCheck, Zap } from 'lucide-react';
 
 export default function HomePage() {
-  const [activeApp, setActiveApp] = useState<'FBM_SHOWCASE' | 'KHIRE_RECRUITMENT'>('FBM_SHOWCASE');
+  const [activeApp, setActiveApp] = useState<'KHIRE_RECRUITMENT' | 'FBM_SHOWCASE'>('KHIRE_RECRUITMENT');
   const [language, setLanguage] = useState<Language>('KO');
   const t = DICTIONARY[language];
 
@@ -253,6 +253,11 @@ export default function HomePage() {
               </button>
             </div>
           </div>
+        </section>
+
+        {/* 360° Interactive Workplace Inspector (FBM Brain Cycles Minimalized) */}
+        <section className="mb-10">
+          <KhireWorkplaceViewer category={selectedCategory} />
         </section>
 
         {/* Radius Filter Component */}

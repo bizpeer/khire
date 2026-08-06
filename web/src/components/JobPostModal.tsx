@@ -273,7 +273,10 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
                   <div className="flex items-center justify-between">
                     <label className="text-slate-300 font-bold flex items-center gap-1.5">
                       <ImageIcon className="w-4 h-4 text-emerald-400" />
-                      공고 이미지 첨부 (URL 또는 파일 직접 업로드)
+                      <span>공고 이미지 첨부</span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 text-[10px] border border-slate-700 font-semibold">
+                        선택사항 (Optional)
+                      </span>
                     </label>
 
                     {/* Mode Toggle Switch */}

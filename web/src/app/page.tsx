@@ -183,6 +183,10 @@ export default function HomePage() {
     setSelectedDetailJob(job);
   };
 
+  const handleViewDetail = (job: JobPost) => {
+    setSelectedDetailJob(job);
+  };
+
   const topMatchJob = filteredJobs[0] || jobsWithDistance[0];
 
   return (
@@ -216,7 +220,7 @@ export default function HomePage() {
       <main className="relative z-10 pt-20 px-4 md:px-8 max-w-7xl mx-auto w-full space-y-8">
         {/* $30 Premium Ad Ticker */}
         <div className="pt-2">
-          <PremiumAdRotationTicker jobs={rawJobs} onSelectJob={(job) => setSelectedDetailJob(job)} />
+          <PremiumAdRotationTicker jobs={rawJobs} onViewDetail={(job) => setSelectedDetailJob(job)} />
         </div>
 
         {/* Hero Section: AI Recommendation Bento */}

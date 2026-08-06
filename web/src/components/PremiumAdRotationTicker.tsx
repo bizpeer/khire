@@ -126,7 +126,11 @@ export default function PremiumAdRotationTicker({ jobs, onViewDetail }: PremiumA
 
           <button
             type="button"
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-extrabold text-xs tracking-wider flex items-center gap-1 shadow-lg shadow-amber-500/20 transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetail(currentJob);
+            }}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-extrabold text-xs tracking-wider flex items-center gap-1 shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
           >
             <span>상세보기</span>
             <ChevronRight className="w-4 h-4" />

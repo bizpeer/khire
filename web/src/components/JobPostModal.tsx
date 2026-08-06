@@ -31,6 +31,9 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
   const [step, setStep] = useState<'FORM' | 'PAYMENT' | 'SUCCESS'>('FORM');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [selectedAdTier, setSelectedAdTier] = useState<'STANDARD' | 'PREMIUM_30'>('STANDARD');
+  const adPrice = selectedAdTier === 'PREMIUM_30' ? 30.00 : 1.00;
+
   if (!isOpen) return null;
 
   // Handle local file selection upload
@@ -197,21 +200,51 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
               </div>
             </div>
 
-            {/* Pricing Policy Highlight Box */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-500/30 mb-6 text-xs text-slate-300">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-extrabold text-emerald-300 flex items-center gap-1.5 text-sm">
-                  <CreditCard className="w-4 h-4 text-emerald-400" />
-                  게시 요금: $1.00 USD
+            {/* Pricing Tier Selector (Standard $1 vs Premium Ad Rotation $30) */}
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/30 mb-6 text-xs text-slate-300 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-white flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-amber-400" />
+                  광고 상품 선택 (Pricing Plan)
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-500/40">
-                  결제 성공 시 7일(168시간) 게시
+                <span className="text-[11px] font-bold text-amber-300">
+                  선택 금액: <strong className="text-sm text-emerald-400 font-black">${adPrice.toFixed(2)} USD</strong>
                 </span>
               </div>
-              <ul className="space-y-1 text-slate-400 text-[11px] list-disc list-inside">
-                <li>결제 성공 시간부터 정확히 7일간 30km 반경 지도 및 목록에 노출되며 이후 자동 삭제됩니다.</li>
-                <li><strong className="text-amber-300">수정, 내용 변경, 재공고 등록 시 건당 $1.00 별도로 과금됩니다.</strong></li>
-              </ul>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAdTier('STANDARD')}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    selectedAdTier === 'STANDARD'
+                      ? 'bg-emerald-500/15 border-emerald-500 text-white ring-1 ring-emerald-500/50 font-bold'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-emerald-300 font-bold">기존 일반 공고</span>
+                    <span className="text-xs font-black text-white">$1.00 USD</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400">7일간 근거리 목록 및 지도 노출</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedAdTier('PREMIUM_30')}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    selectedAdTier === 'PREMIUM_30'
+                      ? 'bg-amber-500/15 border-amber-500 text-white ring-1 ring-amber-500/50 font-bold'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-amber-300 font-bold">👑 $30 프리미엄 5초 광고</span>
+                    <span className="text-xs font-black text-amber-300">$30.00 USD</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400">상단 5초 단위 자동 로테이션 게시</p>
+                </button>
+              </div>
             </div>
 
             {step === 'FORM' ? (

@@ -5,11 +5,11 @@ import Header from '@/components/Header';
 import RadiusFilter from '@/components/RadiusFilter';
 import JobCard from '@/components/JobCard';
 import GoogleMapView from '@/components/GoogleMapView';
-import NewsTicker from '@/components/NewsTicker';
 import AuthModal from '@/components/AuthModal';
 import ResumeModal from '@/components/ResumeModal';
 import JobPostModal from '@/components/JobPostModal';
 import JobDetailModal from '@/components/JobDetailModal';
+import PremiumAdRotationTicker from '@/components/PremiumAdRotationTicker';
 import { getJobsFromDB } from '@/lib/jobService';
 import { MOCK_JOBS, calculateHaversineDistance } from '@/lib/mockJobs';
 import { detectUserLocation } from '@/lib/geoIp';
@@ -196,15 +196,15 @@ export default function HomePage() {
               </span>
             )}
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30">
-              30km 반경 자동 연동
+              IP 접속 근거리 위치 연동
             </span>
           </div>
         </div>
 
-        {/* 24h Gemini AI Country News Ticker */}
-        <NewsTicker
-          countryCode={userLocation.countryCode}
-          countryName={userLocation.countryName}
+        {/* $30 Premium Sponsor Ad 5-Second Rotation Ticker Banner */}
+        <PremiumAdRotationTicker
+          jobs={rawJobs}
+          onViewDetail={handleViewDetail}
         />
 
         {/* Hero Section */}
@@ -224,7 +224,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-slate-300 text-sm sm:text-base mb-6 font-normal leading-relaxed">
-              접속 위치 기반 30km 반경 구글지도에서 고용 희망 업체의 정확한 주소와 실시간 구인 정보를 확인하세요.
+              접속자 위치 근거리 순으로 가장 가깝고 적합한 한인 채용 정보를 바로 확인하세요. 공고 상세 페이지에서 해당 업체의 구글지도 주소를 확인할 수 있습니다.
             </p>
 
             {/* Category Filter Pills */}
@@ -272,32 +272,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Radius Filter Component */}
-        <RadiusFilter
-          currentRadius={selectedRadius}
-          onSelectRadius={setSelectedRadius}
-          userAddress={userLocation.address}
-          totalMatchCount={filteredJobs.length}
-        />
-
-        {/* Google Maps View Component (30km Radius Interactive Map with Employer Addresses) */}
-        <GoogleMapView
-          userLocation={userLocation}
-          radiusKm={selectedRadius}
-          jobs={filteredJobs}
-          onSelectJob={handleApply}
-        />
-
         {/* Jobs Grid Section */}
         <section id="ai-match" className="mb-12">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
                 <Utensils className="w-5 h-5 text-emerald-400" />
-                <span>한인식당·카페 & 숙박·청소 업체 채용 공고</span>
+                <span>접속 위치 근거리 최우선 한인 채용 공고</span>
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                고용 희망 업체의 실제 주소와 30km 반경 근거리 매칭 순으로 자동 노출됩니다.
+                접속자 위치와의 거리가 가까운 순서대로 채용 공고가 자동 정렬됩니다.
               </p>
             </div>
 

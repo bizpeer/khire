@@ -135,12 +135,25 @@ export default function JobDetailModal({
               </div>
             </div>
 
-            {/* Address */}
-            <div className="mb-4 text-xs text-slate-300 space-y-1">
-              <span className="font-bold text-slate-400 flex items-center gap-1">
-                <MapPin className="w-4 h-4 text-emerald-400" /> 근무지 도로명 주소:
-              </span>
-              <p className="pl-5 text-white font-semibold">{job.locationName}</p>
+            {/* Exact Employer Address Google Maps Location Embed */}
+            <div className="mb-6 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-emerald-400" />
+                  근무지 도로명 주소 구글지도 위치
+                </span>
+                <span className="text-[11px] font-bold text-emerald-400">
+                  {job.locationName}
+                </span>
+              </div>
+              <div className="relative w-full h-44 rounded-xl overflow-hidden border border-slate-800">
+                <iframe
+                  title="Employer Google Maps Location"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(job.locationName || `${job.latitude},${job.longitude}`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                  className="w-full h-full border-none filter contrast-105"
+                  loading="lazy"
+                />
+              </div>
             </div>
 
             {/* Description */}

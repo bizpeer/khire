@@ -33,7 +33,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [mobileNumber, setMobileNumber] = useState('');
 
   // Google Maps Address Selection (No Apt / Room details collected)
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState('Strathfield Plaza, Strathfield NSW 2135 (호주 시드니 스트라스필드)');
 
   // Business Reg Number (Optional)
   const [bizRegNumber, setBizRegNumber] = useState('');

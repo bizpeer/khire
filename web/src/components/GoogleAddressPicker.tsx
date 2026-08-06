@@ -12,10 +12,12 @@ interface GoogleAddressPickerProps {
 export default function GoogleAddressPicker({
   value,
   onChange,
-  placeholder = '예: 보문로 9길 48 또는 3832 Wilshire Blvd',
+  placeholder = '예: 호주 시드니 스트라스필드 메인 St 또는 오클랜드 Queen St',
 }: GoogleAddressPickerProps) {
-  const [confirmedAddress, setConfirmedAddress] = useState<string>(value || '');
-  const [isConfirmed, setIsConfirmed] = useState<boolean>(!!value);
+  const [confirmedAddress, setConfirmedAddress] = useState<string>(
+    value || 'Strathfield Plaza, Strathfield NSW 2135 (호주 시드니 스트라스필드)'
+  );
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(true);
 
   // Sync internal confirmed address if external value changes
   useEffect(() => {
@@ -33,15 +35,17 @@ export default function GoogleAddressPicker({
   const handleConfirmGoogleMaps = (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault();
     if (!value.trim()) {
-      alert('구글지도 연동할 주소를 입력해 주세요. (예: 보문로 9길 48)');
+      alert('구글지도 연동할 호주/뉴질랜드 주소를 입력해 주세요. (예: 호주 시드니 스트라스필드)');
       return;
     }
     setConfirmedAddress(value.trim());
     setIsConfirmed(true);
   };
 
-  // Live Google Maps Embed URL generated dynamically from user's exact input query
-  const queryParam = encodeURIComponent(confirmedAddress || value || '미국 캘리포니아 로스앤젤레스');
+  // Live Google Maps Embed URL generated dynamically from user's exact input query (Default: Sydney Australia)
+  const queryParam = encodeURIComponent(
+    confirmedAddress || value || 'Strathfield Plaza, Strathfield NSW 2135, Sydney Australia'
+  );
   const mapEmbedUrl = `https://maps.google.com/maps?q=${queryParam}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
 
   return (
@@ -89,18 +93,18 @@ export default function GoogleAddressPicker({
         </div>
       )}
 
-      {/* Live Interactive Google Map Preview */}
+      {/* Live Interactive Google Map Preview (Sydney Australia Default) */}
       <div className="relative w-full h-32 rounded-2xl overflow-hidden border border-slate-800 shadow-lg bg-slate-950">
         <iframe
-          key={confirmedAddress || 'default'}
-          title="Google Maps Realtime Address Embed"
+          key={confirmedAddress || 'sydney-default'}
+          title="Google Maps Sydney Address Embed"
           src={mapEmbedUrl}
           className="w-full h-full border-none filter contrast-105 opacity-90"
           loading="lazy"
         />
         <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-slate-950/90 text-emerald-300 text-[10px] font-extrabold border border-emerald-500/40 shadow backdrop-blur-sm flex items-center gap-1">
           <Globe className="w-3 h-3 text-emerald-400" />
-          <span>Google Maps 실시간 핀 마킹 ({confirmedAddress || '주소 입력 대기 중'})</span>
+          <span>Google Maps 실시간 핀 마킹 ({confirmedAddress || '호주 시드니 기본 마킹'})</span>
         </div>
       </div>
     </div>

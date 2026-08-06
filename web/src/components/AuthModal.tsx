@@ -1,8 +1,7 @@
-'use client';
-
 import React, { useState } from 'react';
-import { X, Lock, Mail, Shield, Building, UserCheck } from 'lucide-react';
+import { X, Lock, Mail, Shield, Building, UserCheck, ShieldCheck, ExternalLink, CheckSquare, Square } from 'lucide-react';
 import { signInWithGoogle, signInWithApple } from '@/lib/supabaseClient';
+import TermsModal from '@/components/TermsModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,10 +15,20 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // Terms Agreement States (Complies with FTC anti-dark pattern regulations)
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedMarketing, setAgreedMarketing] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLogin && !agreedTerms) {
+      alert('온라인 채용 플랫폼 서비스 이용약관(필수)에 동의해주셔야 회원가입이 완료됩니다.');
+      return;
+    }
+
     const userEmail = email || 'applicant@khire.net';
     if (onLoginSuccess) {
       onLoginSuccess(userEmail);
@@ -153,6 +162,46 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             </div>
           </div>
 
+          {/* Sign-up Terms & Conditions Consent Box (Anti-Dark Pattern Compliant) */}
+          {!isLogin && (
+            <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5 text-xs">
+              <div className="flex items-start justify-between gap-2">
+                <label className="flex items-start gap-2 text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreedTerms}
+                    onChange={(e) => setAgreedTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded accent-indigo-500 bg-slate-950 border-slate-800"
+                  />
+                  <span className="font-bold text-white text-[11px] leading-tight">
+                    [필수] 온라인 채용 및 일자리 매칭 플랫폼 서비스 이용약관 동의
+                  </span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => setIsTermsOpen(true)}
+                  className="text-indigo-400 font-extrabold hover:underline text-[11px] shrink-0 flex items-center gap-0.5"
+                >
+                  <span>[약관보기]</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
+
+              <label className="flex items-start gap-2 text-slate-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedMarketing}
+                  onChange={(e) => setAgreedMarketing(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded accent-indigo-500 bg-slate-950 border-slate-800"
+                />
+                <span className="text-[11px] leading-tight">
+                  [선택] AI 맞춤형 공고 추천 및 마케팅 혜택 정보 수신 동의 (다크패턴 금지 가이드라인 준수)
+                </span>
+              </label>
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all mt-2"
@@ -171,6 +220,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
           </button>
         </div>
       </div>
+
+      {/* Full Terms Modal */}
+      <TermsModal
+        isOpen={isTermsOpen}
+        onClose={() => setIsTermsOpen(false)}
+      />
     </div>
   );
 }

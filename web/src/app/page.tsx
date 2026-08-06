@@ -15,7 +15,6 @@ import { MOCK_JOBS, calculateHaversineDistance } from '@/lib/mockJobs';
 import { detectUserLocation } from '@/lib/geoIp';
 import { RadiusOption, JobPost, UserLocation, JobCategory } from '@/types/job';
 import { Language, DICTIONARY } from '@/lib/i18n';
-import KhireWorkplaceViewer from '@/components/KhireWorkplaceViewer';
 import { Sparkles, Map, List, Search, Globe2, Utensils, Hotel, Truck, Cpu, Navigation, CheckCircle2, Lock, UserCheck, Eye, ShieldCheck, Zap } from 'lucide-react';
 
 export default function HomePage() {
@@ -126,10 +125,28 @@ export default function HomePage() {
       .sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
   }, [jobsWithDistance, selectedRadius, selectedCategory, searchKeyword]);
 
-  // Handle Apply button click: Non-logged in restriction check
+  // Handle Protected Feature Triggers (Requires Login)
+  const handleOpenResume = () => {
+    if (!isLoggedIn) {
+      alert('이력서 등록은 회원 전용 서비스입니다.\n\n로그인 또는 회원가입 후 이용해 주세요.');
+      setIsAuthOpen(true);
+      return;
+    }
+    setIsResumeOpen(true);
+  };
+
+  const handleOpenJobPost = () => {
+    if (!isLoggedIn) {
+      alert('채용 공고등록은 회원 전용 서비스입니다.\n\n로그인 또는 회원가입 후 이용해 주세요.');
+      setIsAuthOpen(true);
+      return;
+    }
+    setIsJobPostOpen(true);
+  };
+
   const handleApply = (job: JobPost) => {
     if (!isLoggedIn) {
-      alert('비로그인 회원 상태입니다.\n\n공고 내용은 자유롭게 읽을 수 있지만, 입사 지원은 회원 전용 서비스입니다.\n로그인 및 회원가입 화면으로 이동합니다.');
+      alert('입사 지원하기는 회원 전용 서비스입니다.\n\n공고 내용은 자유롭게 읽어보실 수 있으며, 실제 지원은 로그인 후 가능합니다.');
       setSelectedDetailJob(job);
       setIsAuthOpen(true);
       return;
@@ -151,8 +168,8 @@ export default function HomePage() {
         language={language}
         onToggleLanguage={handleToggleLanguage}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenResume={() => setIsResumeOpen(true)}
-        onOpenJobPost={() => setIsJobPostOpen(true)}
+        onOpenResume={handleOpenResume}
+        onOpenJobPost={handleOpenJobPost}
         onOpenAdmin={() => setIsAdminOpen(true)}
         isLoggedIn={isLoggedIn}
         userEmail={userProfile?.email}
@@ -253,11 +270,6 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-        </section>
-
-        {/* 360° Interactive Workplace Inspector (FBM Brain Cycles Minimalized) */}
-        <section className="mb-10">
-          <KhireWorkplaceViewer category={selectedCategory} />
         </section>
 
         {/* Radius Filter Component */}

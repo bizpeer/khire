@@ -568,11 +568,15 @@ export default function JobPostModal({ isOpen, onClose, onJobCreated }: JobPostM
 
                   <button
                     onClick={() => handleCompletePostAndPayment({ paymentId: `PAYPAL-APPROVED-${Date.now()}`, status: 'APPROVED' })}
-                    disabled={isSubmitting}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs tracking-wider uppercase shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                    disabled={isSubmitting || !paypalApproved}
+                    className={`w-full py-4 rounded-2xl font-extrabold text-xs tracking-wider uppercase shadow-xl transition-all flex items-center justify-center gap-2 ${
+                      paypalApproved
+                        ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/20'
+                        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                    }`}
                   >
-                    <CheckCircle2 className="w-5 h-5 text-slate-950" />
-                    <span>PayPal 결제 승인 확인 및 공고 즉시 등록 (${adPrice.toFixed(2)} USD)</span>
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>{paypalApproved ? `PayPal 결제 승인 확인 완료 — 공고 즉시 등록 ($${adPrice.toFixed(2)} USD)` : `PayPal 결제 승인 대기 중... (위 버튼으로 먼저 결제하세요)`}</span>
                   </button>
 
                   <button

@@ -230,7 +230,7 @@ export async function saveApplicationToDB(app: Omit<JobApplication, 'id' | 'appl
 /**
  * Save PayPal Payment Record to DB
  */
-export function savePaymentRecordToDB(record: PaymentRecord): PaymentRecord[] {
+export async function savePaymentRecordToDB(record: PaymentRecord): Promise<PaymentRecord[]> {
   let records: PaymentRecord[] = [];
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem(PAYMENTS_STORAGE_KEY);
@@ -238,6 +238,25 @@ export function savePaymentRecordToDB(record: PaymentRecord): PaymentRecord[] {
     records = [record, ...existing];
     localStorage.setItem(PAYMENTS_STORAGE_KEY, JSON.stringify(records));
   }
+
+  // Also persist to Supabase job_payments table
+  try {
+    if (supabase) {
+      await supabase.from('job_payments').insert([
+        {
+          id: record.id,
+          paypal_hosting_id: record.hostedButtonId,
+          amount: record.amount,
+          currency: record.currency,
+          status: record.status === 'APPROVED' ? 'SUCCESS' : 'PENDING',
+          paid_at: record.paidAt,
+        },
+      ]);
+    }
+  } catch (e) {
+    console.warn('Supabase payment insert notice, saved locally:', e);
+  }
+
   return records;
 }
 

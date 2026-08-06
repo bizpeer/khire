@@ -121,23 +121,32 @@ export default function AdminPage() {
     }
   }, [isAdminAuthenticated]);
 
-  // Handle Admin Security Login
-  const handleAdminLoginSubmit = (e: React.FormEvent) => {
+  // Handle Admin Security Login via Server-Side API
+  const handleAdminLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
-    const envUsername = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'admin@khire.net';
-    const envPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'khire2026!admin';
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: adminUsernameInput.trim(),
+          password: adminPasswordInput.trim(),
+        }),
+      });
 
-    if (
-      (adminUsernameInput.trim() === envUsername || adminUsernameInput.trim() === 'admin') &&
-      adminPasswordInput.trim() === envPassword
-    ) {
-      setIsAdminAuthenticated(true);
-      setAdminUsernameInput('');
-      setAdminPasswordInput('');
-    } else {
-      setLoginError('관리자 ID 또는 비밀번호가 올바르지 않습니다.');
+      const data = await res.json();
+
+      if (data.success) {
+        setIsAdminAuthenticated(true);
+        setAdminUsernameInput('');
+        setAdminPasswordInput('');
+      } else {
+        setLoginError(data.error || '관리자 ID 또는 비밀번호가 올바르지 않습니다.');
+      }
+    } catch (err) {
+      setLoginError('서버 연결 오류. 다시 시도해 주세요.');
     }
   };
 
@@ -530,6 +539,20 @@ export default function AdminPage() {
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span className="font-bold text-white flex items-center gap-2">
+                  회원 이메일: jwmaxum@gmail.com (KHIRE 운영자 / Dummy Data 관리)
+                  <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-extrabold">ADMIN</span>
+                </span>
+                <button
+                  onClick={() => handleResetPassword('jwmaxum@gmail.com')}
+                  className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs shadow flex items-center gap-1"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>비밀번호 초기화</span>
+                </button>
+              </div>
+
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                 <span className="font-bold text-white">회원 이메일: employer@khire.net (기업 고용주)</span>
                 <button

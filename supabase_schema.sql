@@ -308,7 +308,7 @@ CREATE POLICY "Authenticated Insert Review" ON public.company_reviews FOR INSERT
 INSERT INTO public.users (id, email, password_hash, role, auth_provider, name)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
-    'siteadmin@khire.net',
+    'admin@khire.net',
     '$2b$10$e846zK7qL1U/2QvW.7O6/.SECURE_HASHED_PASSWORD_PLACEHOLDER',
     'ADMIN',
     'LOCAL',
@@ -317,3 +317,17 @@ VALUES (
 ON CONFLICT (email) DO UPDATE 
 SET role = 'ADMIN',
     name = 'KHIRE System Admin';
+
+-- jwmaxum@gmail.com: Primary operator / dummy data owner
+INSERT INTO public.users (id, email, password_hash, role, auth_provider, name)
+VALUES (
+    '00000000-0000-0000-0000-000000000002',
+    'jwmaxum@gmail.com',
+    '$2b$10$e846zK7qL1U/2QvW.7O6/.SECURE_HASHED_PASSWORD_PLACEHOLDER',
+    'ADMIN',
+    'LOCAL',
+    'JW Maxum (KHIRE Operator)'
+)
+ON CONFLICT (email) DO UPDATE 
+SET role = 'ADMIN',
+    name = 'JW Maxum (KHIRE Operator)';
